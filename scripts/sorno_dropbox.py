@@ -6,7 +6,7 @@ Provides utilities to work with Dropbox just like the official dropbox cli
 but in a script instead of a REPL way. sorno_dropbox also has higher level
 features like copying directories recursively. Before you use this script, you
 need to export the environment variables DROPBOX_APP_KEY and
-DROPBOX_APP_SECRET for the app key and app secret of Dropbox.  You can find
+DROPBOX_APP_SECRET for the app key and app secret of Dropbox. You can find
 these at http://www.dropbox.com/developers/apps. For simplicity sake, just
 give the app key "Full Dropbox" permission.
 

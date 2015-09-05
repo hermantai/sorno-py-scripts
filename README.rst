@@ -1,7 +1,7 @@
 sorno-py-scripts
 ================
 
-My python scripts. `sorno` is just a brand name that I use for my products.
+My python scripts. `sorno` is just a brand name that I use for my stuff.
 It's convenient to use that as a package name instead of the usual "org.xxx".
 
 The source code of the whole project is in github:
@@ -14,7 +14,8 @@ scripts. Often the documentation is in the __doc__ of the script, so take a
 look at that as well.
 
 All scripts are prefixed with "`sorno_`" to avoid polluting the Scripts folder
-of python or other binaries when this suite is installed.
+(in Windows, /usr/local/bin in \*nix) of python or other binaries when this
+suite is installed.
 
 This project also includes the `sorno` library.
 
@@ -30,7 +31,7 @@ getting permission error.
 A Python package management system will make your life easier, so install pip
 by::
 
-  easy_install pip
+    $ easy_install pip
 
 If easy_install is not on your system, you can check how to install it in
 https://pythonhosted.org/setuptools/easy_install.html#installing-easy-install.
@@ -39,27 +40,27 @@ Install from source
 ~~~~~~~~~~~~~~~~~~~
 You can install sorno-py-scripts from the source code by cloning the git repo::
 
-  git clone https://github.com/hermantai/sorno-py-scripts
+    $ git clone https://github.com/hermantai/sorno-py-scripts
 
 Then cd to the sorno-py-scripts directory::
 
-  cd sorno-py-scripts
+    $ cd sorno-py-scripts
 
 Install it::
 
-  python setup.py install
+    $ python setup.py install
 
 Install with pip
 ~~~~~~~~~~~~~~~~
 ::
 
-  pip install sorno_py_scripts
+    $ pip install sorno_py_scripts
 
 Install with easy-install
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 ::
 
-  easy_install sorno_py_scripts
+    $ easy_install sorno_py_scripts
 
 Running the scripts
 -------------------
@@ -76,25 +77,25 @@ console ($ is the prompt of the console)::
 
 Running the tests
 -----------------
-In the directory containing the ./test.sh file, then run it.
+In the directory containing the ./test.sh file, then run it::
 
-  $ ./test.sh
+    $ ./test.sh
 
-You can run tests only for the sorno library:
+You can run tests only for the sorno library::
 
-  $ ./test_sorno.sh
+    $ ./test_sorno.sh
 
-Or tests only for the scripts:
+Or tests only for the scripts::
 
-  $ ./test_scripts.sh
+    $ ./test_scripts.sh
 
 Contents
 --------------------
 Use -h or --help options for the scripts to get more detail documentation for
 each script.
 
-sorno_alarm.py
-~~~~~~~~~~~~~~~~~~~~
+sorno_alarm.py (alpha)
+~~~~~~~~~~~~~~~~~~~~~~
 A console alarm which uses the system bell as the alarm bell by default. You
 set how
 many seconds before the alarm goes off, not an absolute time in the future.
@@ -104,7 +105,7 @@ specified time. Use control-c to exit the alarm completely.
 
 sorno_amazon_reviews_scrape.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A script to scrape Amazon product reviews
+A script to scrape Amazon product reviews from the web page.
 
 sorno_amazon_wishlist_scrape.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,18 +144,15 @@ sorno_gdoc.py
 A command line client for accessing Google Docs. The API doc used to implement
 it is in https://developers.google.com/drive/web/quickstart/quickstart-python
 
-You need to install the Google Client library before using the script:
-https://developers.google.com/drive/web/quickstart/quickstart-python#step_2_install_the_google_client_library
+You can search for a file and download its content (only if it's a doc).
 
 sorno_gdrive.py
 ~~~~~~~~~~~~~~~~~~~
-A command line client for managing Google Drive. The API doc used to implement
-it is in https://developers.google.com/drive/web/quickstart/quickstart-python
+A command line client for Google Drive. The API doc used to implement this is
+in
+https://developers.google.com/drive/web/quickstart/quickstart-python
 
-You need to install the Google Client library before using the script:
-https://developers.google.com/drive/web/quickstart/quickstart-python#step_2_install_the_google_client_library
-
-Currently, you can upload files with this.
+Currently, you can upload files with the script.
 
 sorno_gtasks.py
 ~~~~~~~~~~~~~~~
@@ -184,19 +182,23 @@ This ensures the history is inserted in a useful way, e.g. when you run
 
 sorno_podcast_downloader.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Downloads podcasts given a feed url. The downloaded podcasts have useful file
+Downloads podcasts given a feed url.
+
+The downloaded podcasts have useful file
 names (e.g contain the title of the podcast and prefixed by the published
-date)
+date).
 
 sorno_reduce_image_sizes.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Reduces the sizes of all images in a directory and its subdirectories by saving them with lower
-quality jpg format. The directory structure is preserved but the new directory
-is created with a timestamp suffix.
+Saves images with reduced sizes.
+
+Reduces the sizes of all images in a directory and its subdirectories by
+saving them with lower quality jpg format. The directory structure is
+preserved but the new directory is created with a timestamp suffix.
 
 sorno_scrape_peg_list_1000.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A script to scrape the 1000 pegs from http://www.rememberg.com/Peg-list-1000/
+Scrapes the 1000 pegs from http://www.rememberg.com/Peg-list-1000/
 
 sorno_spacefill.py
 ~~~~~~~~~~~~~~~~~~
@@ -204,19 +206,23 @@ Fills up the disk space with a specific size of garbage data.
 
 sorno_stock_quote.py
 ~~~~~~~~~~~~~~~~~~~~
-Gets a stock quote from Yahoo.
+Gets stock quotes and other information for stock symbols.
 
-The utility can print real-time or close to real-time stock quotes, historical
+The script can print real-time or close to real-time stock quotes, historical
 quotes, and also fundamental ratios for the stock (company).
 
 sorno_summarize_code.py
 ~~~~~~~~~~~~~~~~~~~~~~~
-Prints a summary of the code file, so the layout of the code can be read
-easily. Currently it only supports python files.
+Prints a summary of the code file.
+
+It makes the layout of the code to be read easily. Currently it only supports
+python files.
 
 sorno_top_size_files.py
 ~~~~~~~~~~~~~~~~~~~~~~~
-Prints the top files under a directory or its subdirectories in terms of the
+Prints the top files in terms of sizes.
+
+Prints the top files in terms of sizes under a directory or its subdirectories
 size
 
 sorno_replace_thrift_const.py

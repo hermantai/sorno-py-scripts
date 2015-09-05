@@ -1,6 +1,22 @@
 #!/usr/bin/env python
 """Downloads all items from all links from a URL.
 
+Usually, you want to use --regex to filter out what you need. Using --dry-out
+to tune your regex before the actual downloading of course.
+
+Example:
+
+    Let say there is a webpage with url http://content.com that has a lot of
+    links to http://good-stuff/stuff1.zip, http://good-stuff/stuff2.zip, etc.
+    You should do this first to see if you get all the links you want:
+
+        sorno_download_all.py --dry-run --regex "stuff.*zip" \\
+            "http://content.com"
+
+    Then run the actual command to download them.
+
+        sorno_download_all.py --regex "stuff.*zip" "http://content.com"
+
 
     Copyright 2014 Herman Tai
 

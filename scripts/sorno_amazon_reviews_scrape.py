@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""A script to scrape Amazon product reviews
+"""A script to scrape Amazon product reviews from the web page.
+
 
     Copyright 2014 Herman Tai
 

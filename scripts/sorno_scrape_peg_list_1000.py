@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""A script to scrape the 1000 pegs from http://www.rememberg.com/Peg-list-1000/
+"""Scrapes the 1000 pegs from http://www.rememberg.com/Peg-list-1000/
 
 
     Copyright 2014 Herman Tai

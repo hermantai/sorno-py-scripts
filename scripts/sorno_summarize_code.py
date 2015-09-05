@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-"""
-Print a summary of the code, so the layout of the code can be read easily.
+"""Prints a summary of the code file.
+
+It makes the layout of the code to be read easily. Currently it only supports
+python files.
 
    Copyright 2014 Herman Tai
 

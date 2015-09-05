@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-"""
-sorno_spacefill.py
+"""Fills up the disk space with a specific size of garbage data.
 
-Fill up the disk space with a specific size of garbage data.
 
    Copyright 2014 Herman Tai
 

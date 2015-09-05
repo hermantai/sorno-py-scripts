@@ -1,8 +1,10 @@
 #!/usr/bin/python
 """A command line client for Google Drive.
 
-The API doc is in
+The API doc used to implement this is in
 https://developers.google.com/drive/web/quickstart/quickstart-python
+
+Currently, you can upload files with the script.
 
 In order to use this script, please look at the "Using scripts involve Google
 App API" section of the sorno-py-scripts README (can be found in

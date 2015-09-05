@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-"""Get stock quotes and other information for stock symbols.
+"""Gets stock quotes and other information for stock symbols.
+
+The script can print real-time or close to real-time stock quotes, historical
+quotes, and also fundamental ratios for the stock (company).
 
 
     Copyright 2014 Herman Tai

@@ -1,8 +1,10 @@
 #!/usr/bin/python
 """A command line client for Google Docs.
 
-The API doc is in
+The API doc used to implement this is in
 https://developers.google.com/drive/web/quickstart/quickstart-python
+
+You can search for a file and download its content (only if it's a doc).
 
 In order to use this script, please look at the "Using scripts involve Google
 App API" section of the sorno-py-scripts README (can be found in
@@ -208,7 +210,7 @@ def _parse_args(cmd_args):
         " specified. If --output is not specified, the standard input of"
         " the process created by the command is filled with the content of"
         " the file instead."
-        " Some useful commands for this option are less, vi, cat, etc."
+        " Some useful commands for this option are less, sed, cat, etc."
     )
 
     parser.add_argument(

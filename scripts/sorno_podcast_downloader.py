@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-"""A script to download podcasts from a feed with appropriate file names
+"""Downloads podcasts given a feed url.
+
+The downloaded podcasts have useful file names (e.g contain the title of the
+podcast and prefixed by the published date).
 
 
     Copyright 2014 Herman Tai
