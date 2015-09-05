@@ -36,6 +36,18 @@ by::
 If easy_install is not on your system, you can check how to install it in
 https://pythonhosted.org/setuptools/easy_install.html#installing-easy-install.
 
+Install with pip
+~~~~~~~~~~~~~~~~
+::
+
+    $ pip install sorno_py_scripts  # note that the project name is in underscores, not dashes
+
+Install with easy-install
+~~~~~~~~~~~~~~~~~~~~~~~~~
+::
+
+    $ easy_install sorno_py_scripts  # note that the project name is in underscores, not dashes
+
 Install from source
 ~~~~~~~~~~~~~~~~~~~
 You can install sorno-py-scripts from the source code by cloning the git repo::
@@ -50,17 +62,6 @@ Install it::
 
     $ python setup.py install
 
-Install with pip
-~~~~~~~~~~~~~~~~
-::
-
-    $ pip install sorno_py_scripts
-
-Install with easy-install
-~~~~~~~~~~~~~~~~~~~~~~~~~
-::
-
-    $ easy_install sorno_py_scripts
 
 Running the scripts
 -------------------
