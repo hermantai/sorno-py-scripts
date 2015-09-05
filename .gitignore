@@ -55,3 +55,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# vi swp file
+*.swp
+
+# mac
+.DS_STORE
