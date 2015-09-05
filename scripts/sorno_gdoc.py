@@ -114,6 +114,8 @@ def _main():
 
         if args.lucky:
             chosen = 0
+        elif args.lucky_number:
+            chosen = int(args.lucky_number) - 1  # from 1-based to 0-based
         else:
             chosen = int(raw_input("Choose file: "))
 
@@ -184,6 +186,12 @@ def _parse_args(cmd_args):
         "--lucky",
         action="store_true",
         help="Choose the first result from the query without prompting",
+    )
+
+    parser.add_argument(
+        "--lucky-number",
+        help="Choose the lucky-number'th result instead of the first without"
+            " prompting",
     )
 
     parser.add_argument(
