@@ -47,7 +47,7 @@ OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.readonly'
 # Redirect URI for installed apps
 REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
-CREDENTIALS_FILE = "/tmp/google-drive-api.cred"
+CREDENTIALS_FILE = os.path.expanduser("~/.sorno_gdoc-google-drive-api.cred")
 
 
 def _main():
