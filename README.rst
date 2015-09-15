@@ -136,9 +136,16 @@ Provides utilities to work with dropbox just like the official dropbox cli
 but in a script instead of a REPL way. sorno_dropbox also has higher level
 features like copying directories recursively.
 
+sorno_email.py
+~~~~~~~~~~~~~~
+Sends a simple email with plain text
+
+The script first tries to use your system Mail Transfer Agent(MTA) configured,
+otherwise, it prompts for login to use Gmail SMTP server.
+
 sorno_facts.py
 ~~~~~~~~~~~~~~~~~~~~
-Prints out a random facts for fun
+Prints out a random fact for fun
 
 sorno_gdoc.py
 ~~~~~~~~~~~~~~~~~
