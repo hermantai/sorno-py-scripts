@@ -98,6 +98,7 @@ class PickerApp(object):
         output_items_with_path_expansions=False,
         enumerate_items=True,
         list_only=False,
+        is_lucky=False
     ):
         self.commands = commands
         self.filepaths = filepaths
@@ -110,6 +111,7 @@ class PickerApp(object):
         )
         self.enumerate_items = enumerate_items
         self.list_only = list_only
+        self.is_lucky = is_lucky
 
     def run(self):
         items = []
@@ -135,6 +137,12 @@ class PickerApp(object):
 
         if self.list_only:
             return []
+
+        if self.is_lucky:
+            if items:
+                return [items[0]]
+            else:
+                return []
 
         reply = consoleutil.input("Please choose:", file=sys.stderr)
 
@@ -341,6 +349,12 @@ def parse_args(cmd_args):
         action="store_true",
     )
 
+    parser.add_argument(
+        "--lucky",
+        action="store_true",
+        help="Choose the first choice without prompting",
+    )
+
     args = parser.parse_args(cmd_args)
     return args
 
@@ -362,6 +376,7 @@ def main():
         ),
         enumerate_items=args.enumerate_items,
         list_only=args.list_only,
+        is_lucky=args.lucky,
     )
     app.run()
 
