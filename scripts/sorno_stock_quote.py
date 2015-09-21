@@ -37,7 +37,7 @@ import subprocess
 from bs4 import BeautifulSoup
 import requests
 from sorno import loggingutil
-from sorno.console.util import DataPrinter
+from sorno import consoleutil
 
 _LOG = logging.getLogger(__name__)
 _PLAIN_LOGGER = None  # will be created in main()
@@ -138,7 +138,9 @@ class StockApp(object):
             rows = list(reader)
             rows.sort(key=lambda r: r['Date'])
 
-            DataPrinter(rows).print_result(DataPrinter.PRINT_STYLE_VERBOSE)
+            consoleutil.DataPrinter(rows).print_result(
+                consoleutil.DataPrinter.PRINT_STYLE_VERBOSE
+            )
 
         if self.print_history:
             _PLAIN_LOGGER.info("")
@@ -196,11 +198,11 @@ class StockApp(object):
             else:
                 # process data
                 rows.append([td.get_text() for td in tr.select("td")])
-        DataPrinter(
+        consoleutil.DataPrinter(
             rows,
             headers=headers,
             print_func=_PLAIN_LOGGER.info,
-        ).print_result(DataPrinter.PRINT_STYLE_NICETABLE)
+        ).print_result(consoleutil.DataPrinter.PRINT_STYLE_NICETABLE)
 
 
 def parse_args(cmd_args):
