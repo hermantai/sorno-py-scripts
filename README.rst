@@ -321,3 +321,8 @@ Then you can use the script to deploy to PyPI::
     $ ./pypi_deploy_with_twine.sh
 
 Use **sudo** if you encounter permission issues when running the commands.
+
+Use the following if you get an error saying "twine cannot be found" even
+twine is on your PATH::
+
+    sudo env "PATH=$PATH" ./pypi_deploy_with_twine.sh

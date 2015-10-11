@@ -21,13 +21,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import inspect
 import mock
-import types
 import unittest
 
+from sorno import loggingutil
 import sorno_gtasks
 
 
+loggingutil.setup_logger(sorno_gtasks._log)
 sorno_gtasks._plain_logger = sorno_gtasks._log
 sorno_gtasks._plain_error_logger = sorno_gtasks._log
 
@@ -46,7 +48,7 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
         task list. The task list contains three items. The action should ask
         which tasks the user wants.
 
-        The test inputs "1,3", then the action should show the task lists and
+        The test inputs "1,3", then the action should show the tasks and
         ask the user to choose the destination task list.
 
         The test inputs "1", then the action should ask to confirm.
@@ -54,6 +56,8 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
         The test inputs "y", then the action should make some calls to copy
         the tasks.
         """
+        print(self._get_calling_method_name())
+
         tasklists = [
             {'id': "101", 'title': "tasklist1"},
             {'id': "102", 'title': "tasklist2"},
@@ -66,7 +70,7 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
 
         self.app.get_tasklists = mock.MagicMock(return_value=tasklists)
 
-        def get_tasks_from_tasklist(self, tasklist_id):
+        def get_tasks_from_tasklist(tasklist_id):
             if tasklist_id == "102":
                 return tasklist2_tasks
             else:
@@ -74,9 +78,8 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
                     tasklist_id + " is not 102"
                 )
 
-        self.app.get_tasks_from_tasklist = types.MethodType(
-            get_tasks_from_tasklist,
-            self.app,
+        self.app.get_tasks_from_tasklist = mock.MagicMock(
+            side_effect=get_tasks_from_tasklist
         )
 
         self.app.insert_task = mock.MagicMock()
@@ -112,13 +115,15 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
         task list. The task list contains three items. The action should ask
         which tasks the user wants.
 
-        The test inputs "1,3", then the action should show the task lists and
+        The test inputs "1,3", then the action should show the tasks and
         ask the user to choose the destination task list.
 
         The test inputs "1", then the action should ask to confirm.
 
         The test inputs "n", then the action should be aborted.
         """
+        print(self._get_calling_method_name())
+
         tasklists = [
             {'id': "101", 'title': "tasklist1"},
             {'id': "102", 'title': "tasklist2"},
@@ -131,7 +136,7 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
 
         self.app.get_tasklists = mock.MagicMock(return_value=tasklists)
 
-        def get_tasks_from_tasklist(self, tasklist_id):
+        def get_tasks_from_tasklist(tasklist_id):
             if tasklist_id == "102":
                 return tasklist2_tasks
             else:
@@ -139,9 +144,8 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
                     tasklist_id + " is not 102"
                 )
 
-        self.app.get_tasks_from_tasklist = types.MethodType(
-            get_tasks_from_tasklist,
-            self.app,
+        self.app.get_tasks_from_tasklist = mock.MagicMock(
+            side_effect=get_tasks_from_tasklist
         )
 
         self.app.insert_task = mock.MagicMock()
@@ -161,3 +165,124 @@ class GoogleTasksConsoleAppTestCase(unittest.TestCase):
         )
 
         self.assertFalse(self.app.insert_task.called)
+
+    def test_delete_tasks_action_Aborted(self):
+        """
+        The action should first make a call to get task lists for the user
+        and show two task lists, ask for input to choose a task list.
+
+        The test inputs "2", then the action should get task lists for that
+        task list. The task list contains three items. The action should ask
+        which tasks the user wants.
+
+        The test inputs "1,3", then the action should show the tasks and ask
+        to confirm.
+
+        The test inputs "n", then the action should be aborted.
+        """
+        print(self._get_calling_method_name())
+
+        tasklists = [
+            {'id': "101", 'title': "tasklist1"},
+            {'id': "102", 'title': "tasklist2"},
+        ]
+        tasklist2_tasks = [
+            {'id': "501", 'title': "task1"},
+            {'id': "502", 'title': "task2"},
+            {'id': "503", 'title': "task3"},
+        ]
+
+        self.app.get_tasklists = mock.MagicMock(return_value=tasklists)
+
+        def get_tasks_from_tasklist(tasklist_id):
+            if tasklist_id == "102":
+                return tasklist2_tasks
+            else:
+                raise ValueError(
+                    tasklist_id + " is not 102"
+                )
+
+        self.app.get_tasks_from_tasklist = mock.MagicMock(
+            side_effect=get_tasks_from_tasklist
+        )
+
+        self.app.delete_task = mock.MagicMock()
+
+        with mock.patch(
+            "sorno.consoleutil.input",
+            side_effect=("2", "1,3"),
+        ), mock.patch(
+            "sorno.consoleutil.confirm",
+            return_value=False,
+        ):
+            self.app.delete_tasks_action(self.args)
+
+        self.app.auth.assert_called_once_with(
+            self.args,
+            use_credentials_cache=self.args.use_credentials_cache,
+        )
+
+        self.assertFalse(self.app.delete_task.called)
+
+    def test_delete_tasks_action(self):
+        """
+        The action should first make a call to get task lists for the user
+        and show two task lists, ask for input to choose a task list.
+
+        The test inputs "2", then the action should get task lists for that
+        task list. The task list contains three items. The action should ask
+        which tasks the user wants.
+
+        The test inputs "1,3", then the action should show the tasks and ask
+        to confirm.
+
+        The test inputs "y", then the action should make some calls to delete
+        the tasks.
+        """
+        print(self._get_calling_method_name())
+
+        tasklists = [
+            {'id': "101", 'title': "tasklist1"},
+            {'id': "102", 'title': "tasklist2"},
+        ]
+        tasklist2_tasks = [
+            {'id': "501", 'title': "task1"},
+            {'id': "502", 'title': "task2"},
+            {'id': "503", 'title': "task3"},
+        ]
+
+        self.app.get_tasklists = mock.MagicMock(return_value=tasklists)
+
+        def get_tasks_from_tasklist(tasklist_id):
+            if tasklist_id == "102":
+                return tasklist2_tasks
+            else:
+                raise ValueError(
+                    tasklist_id + " is not 102"
+                )
+
+        self.app.get_tasks_from_tasklist = mock.MagicMock(
+            side_effect=get_tasks_from_tasklist
+        )
+
+        self.app.delete_task = mock.MagicMock()
+
+        with mock.patch(
+            "sorno.consoleutil.input",
+            side_effect=("2", "1,3"),
+        ), mock.patch(
+            "sorno.consoleutil.confirm",
+            return_value=True,
+        ):
+            self.app.delete_tasks_action(self.args)
+
+        self.app.delete_task.assert_has_calls(
+            [
+                mock.call("102", tasklist2_tasks[0]['id']),
+                mock.call("102", tasklist2_tasks[2]['id']),
+            ],
+            any_order=True,
+        )
+
+    def _get_calling_method_name(self):
+        return inspect.stack()[1][3]

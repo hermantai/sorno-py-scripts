@@ -90,7 +90,7 @@ class GoogleTasksConsoleApp(object):
         script.
 
         Args:
-            flags (argparse.Namespace): The flags for this script
+            flags (argparse.Namespace): The flags for this script.
             use_credentials_cache (Optional[bool]): If true, uses the
                 credentials stored in ``CREDENTIALS_FILE``.
         """
@@ -243,12 +243,12 @@ class GoogleTasksConsoleApp(object):
         return 0
 
     def insert_task(self, tasklist_id, task):
-        """Insert a task
+        """Inserts a task.
 
         Args:
-            tasklist_id (str): The tasklist that contains the task
+            tasklist_id (str): The tasklist that contains the task.
             task (dict): The representation of a task. See
-                https://developers.google.com/google-apps/tasks/v1/reference/tasks#resource-representations
+                https://developers.google.com/google-apps/tasks/v1/reference/tasks#resource-representations.
         """
         t = task.copy()
         t.pop('id', ' ')
@@ -257,11 +257,108 @@ class GoogleTasksConsoleApp(object):
             body=t,
         ).execute()
 
+    def delete_task(self, tasklist_id, task_id):
+        """Deletes a task.
+
+        Args:
+            tasklist_id (str): The id of the tasklist that contains the task.
+            task_id (str): The id of the task inside the tasklist that is to
+                be deleted.
+        """
+        self.tasks_service.tasks().delete(
+            tasklist=tasklist_id,
+            task=task_id,
+        ).execute()
+
+    def delete_tasks_action(self, args):
+        self.auth(args, use_credentials_cache=args.use_credentials_cache)
+
+        # ask the user to choose a task list that contains the tasks
+
+        tasklists = self.get_tasklists()
+        for index, tasklist in enumerate(tasklists, 1):
+            print(
+                "{0}) {1} (id: {2})".format(
+                    index,
+                    tasklist['title'],
+                    tasklist['id'],
+                )
+            )
+
+        ans = consoleutil.input(
+            "Please choose the list that contains the tasks: "
+        )
+
+        intvs = consoleutil.parse_intervals(ans)
+        list_number = intvs[0].start
+        chosen_tasklist = tasklists[list_number - 1]
+
+        _plain_logger.info("")
+        # ask the user to choose the tasks from the chosen task list
+
+        tasks = self.get_tasks_from_tasklist(chosen_tasklist['id'])
+
+        _plain_logger.info(
+            "Tasklist [%s] has the following tasks:",
+            chosen_tasklist['title'],
+        )
+        self._print_tasks_with_ids(tasks)
+
+        ans = consoleutil.input(
+            "Please choose the tasks that you want to delete: "
+        )
+
+        intvs = consoleutil.parse_intervals(ans)
+
+        chosen_tasks = []
+        for intv in intvs:
+            chosen_tasks.extend(
+                # the start and end in interals are one-based, so need to
+                # reduce them each by 1
+                tasks[intv.start - 1:intv.end]
+            )
+
+        dups = self._get_duplicated_items(chosen_tasks)
+        if dups:
+            _plain_logger.error(
+                "The following tasks are chosen more than once:"
+            )
+            self._print_tasks_with_ids(dups, ref=tasks)
+            return GoogleTasksConsoleApp.EXIT_CODE_USER_INPUT_ERROR
+
+        _plain_logger.info("Chosen tasks:")
+        self._print_tasks_with_ids(chosen_tasks, ref=tasks)
+
+        _plain_logger.info("")
+
+        # ask the user to confirm
+        confirm_msg = re.sub(
+            r"\s+",
+            " ",
+            """
+            Are you sure you want to delete the chosen tasks from task list?
+            [{0}]
+            """.strip().format(
+                chosen_tasklist['title'],
+            ),
+        )
+
+        if not consoleutil.confirm(confirm_msg):
+            _plain_error_logger.error("Aborted")
+            return GoogleTasksConsoleApp.EXIT_CODE_USER_ABORT
+
+        # delete the tasks
+
+        for task in chosen_tasks:
+            self.delete_task(chosen_tasklist['id'], task['id'])
+
+        return 0
+
     def _print_tasks_with_ids(self, tasks, ref=None):
         """Print tasks along with their id's.
 
         Args:
-            tasks (sequence[task]): Tasks to be printed out
+            tasks (sequence[task]): Tasks to be printed out.
             ref (Optional[sequence[task]]): By default, this method simply
                 prints the sequence numbers of the tasks according to the
                 position of the task in the given tasks (one-based). If ref is
@@ -516,12 +613,21 @@ Examples:
 
     parser_copy_tasks = subparsers.add_parser(
         "copy_tasks",
-        description="Copy tasks. Simply follow the prompt instructions to"
-            " finish the action.",
-        help="Copy tasks",
+        description="Copy tasks from one task list to another."
+            " Simply follow the prompt instructions to finish the action.",
+        help="Copy tasks from one task list to another.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser_copy_tasks.set_defaults(func=app_obj.copy_tasks_action)
+
+    parser_delete_tasks = subparsers.add_parser(
+        "delete_tasks",
+        description="Delete tasks in a task list."
+            " Simply follow the prompt instructions to finish the action.",
+        help="Delete tasks in a task list.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser_delete_tasks.set_defaults(func=app_obj.delete_tasks_action)
 
     args = parser.parse_args(cmd_args)
     return args
