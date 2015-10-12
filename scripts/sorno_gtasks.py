@@ -466,9 +466,17 @@ class GoogleTasksConsoleApp(object):
                     s = pprint.pformat(task)
                 else:
                     s = task['title']
-                _plain_logger.info("%d) %s", index, s)
-                if args.with_notes:
+
+                if args.list_with_chars is not None:
+                    _plain_logger.info("%s%s", args.list_with_chars, s)
+                else:
+                    _plain_logger.info("%d) %s", index, s)
+
+                if args.show_notes:
                     _plain_logger.info("Notes: %s", task.get('notes', ""))
+                elif args.show_notes_if_presence:
+                    if task.get('notes'):
+                        _plain_logger.info("Notes: %s", task['notes'])
 
         return 0
 
@@ -577,7 +585,7 @@ Examples:
         $ sorno_gtasks.py get_tasks list1 list2
 
 By default, get_tasks only prints the titles of your tasks. You can use
---with-notes option to print the notes as well. Use the --detail option to
+--show-notes option to print the notes as well. Use the --detail option to
 show details.
 
 Examples:
@@ -594,9 +602,19 @@ Examples:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser_get_tasks.add_argument(
-        "--with-notes",
+        "--show-notes",
         action="store_true",
         help="shows the notes for each task",
+    )
+    parser_get_tasks.add_argument(
+        "--show-notes-if-presence",
+        action="store_true",
+        help="shows the notes for tasks with notes",
+    )
+    parser_get_tasks.add_argument(
+        "--list-with-chars",
+        help="instead of numerating the tasks, use the characters specified in"
+        " this option instead"
     )
     parser_get_tasks.add_argument(
         "--detail",
