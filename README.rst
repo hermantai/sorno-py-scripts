@@ -204,6 +204,17 @@ Reduces the sizes of all images in a directory and its subdirectories by
 saving them with lower quality jpg format. The directory structure is
 preserved but the new directory is created with a timestamp suffix.
 
+sorno_rename.py
+~~~~~~~~~~~~~~~
+sorno_rename.py renames files given regex for matching names of the
+existing files and using backreferences for filenames to be renamed to.
+
+sorno_replace_thrift_const.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Replaces constants with literal values for a thrift file except for the
+declaration. This is mainly for thrift compilers which cannot handle constants
+within lists or other collection structures.
+
 sorno_scrape_peg_list_1000.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Scrapes the 1000 pegs from http://www.rememberg.com/Peg-list-1000/
@@ -232,12 +243,6 @@ Prints the top files in terms of sizes.
 
 Prints the top files in terms of sizes under a directory or its subdirectories
 size
-
-sorno_replace_thrift_const.py
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Replaces constants with literal values for a thrift file except for the
-declaration. This is mainly for thrift compilers which cannot handle constants
-within lists or other collection structures.
 
 Using scripts involving Google App API
 ---------------------------------------
