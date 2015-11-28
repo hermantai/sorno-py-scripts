@@ -61,32 +61,43 @@ class App(object):
     def run(self):
         r = stringutil.u(self.args.regex)
         s = stringutil.u(self.args.sub)
-        for dirpath, dirs, filenames in os.walk(self.args.dir):
+        if self.args.recursive:
+            for dirpath, dirs, filenames in os.walk(self.args.dir):
+                for fname in filenames:
+                    self.process_file(r, s, dirpath, fname)
+        else:
+            filenames = os.listdir(self.args.dir)
             for fname in filenames:
-                fname = stringutil.u(fname)
-                m = re.match(r, fname, re.UNICODE)
-                if m:
-                    old = os.path.abspath(os.path.join(dirpath, fname))
-                    groups = (m.group(0),) + m.groups()
-                    new = os.path.abspath(
-                        os.path.join(
-                            dirpath,
-                            s.format(*groups),
-                        )
-                    )
-                    self.filenames_map[old] = new
+                self.process_file(r, s, self.args.dir, fname)
 
-        for k, v in self.filenames_map.iteritems():
-            print(u"%s => %s" % (k, v))
+        n = len(self.filenames_map)
+        sn = len(str(n))
+
+        for i, (k, v) in enumerate(self.filenames_map.iteritems()):
+            print(u"%*d. %s => %s" % (sn, i + 1, k, v))
 
         if consoleutil.confirm("Do you want to do the rename?"):
-            for k, v in self.filenames_map.iteritems():
-                print("Rename %s to %s" % (k, v))
+            for i, (k, v) in enumerate(self.filenames_map.iteritems()):
+                print("%*d. Rename %s to %s" % (sn, i + 1, k, v))
                 os.rename(k, v)
             return 0
         else:
             print("Aborted")
             return 1
+
+    def process_file(self, regex, sub, dirpath, filename):
+        filename = stringutil.u(filename)
+        m = re.match(regex, filename, re.UNICODE)
+        if m:
+            old = os.path.abspath(os.path.join(dirpath, filename))
+            groups = (m.group(0),) + m.groups()
+            new = os.path.abspath(
+                os.path.join(
+                    dirpath,
+                    sub.format(*groups),
+                )
+            )
+            self.filenames_map[old] = new
 
 
 def parse_args(cmd_args):
@@ -111,6 +122,16 @@ def parse_args(cmd_args):
             """
         ),
         default=".",
+    )
+    parser.add_argument(
+        "-R",
+        "--recursive",
+        help=stringutil.oneline(
+            """
+            Recursively goes to subdirectories to look for files to be renamed
+            """
+        ),
+        action="store_true",
     )
     parser.add_argument(
         "--regex",
