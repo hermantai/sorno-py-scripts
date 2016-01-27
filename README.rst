@@ -162,6 +162,15 @@ https://developers.google.com/drive/web/quickstart/quickstart-python
 
 Currently, you can upload files with the script.
 
+sorno_grepchunks.py
+~~~~~~~~~~~~~~~~~~~
+Oftenly, you want to treat multiple lines as one chunk and see if it matches a
+regex. If it does, you want to print out the whole chunk instead of the only
+line that matches the regex. sorno_grepchunks lets you define what a chunk
+is by giving a chunk starting regex, that is, all the lines starting from the
+line that matches the regex and before the next match are treated as one
+chunk. You can then apply another regex to match against it.
+
 sorno_gtasks.py
 ~~~~~~~~~~~~~~~
 A script version of Google Tasks
