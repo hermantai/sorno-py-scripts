@@ -121,6 +121,15 @@ Generate an appcache file to be used for html5 application cache of a web
 application. The goal is to make the whole web app cached, so the app can be
 run offline.
 
+sorno_cloud_vision.py
+~~~~~~~~~~~~~~~~~~~~~
+sorno_cloud_vision.py makes using the Google Cloud Vision API easier.
+
+Doc: https://cloud.google.com/vision/docs
+
+The script generates requests for the given photos, sends the requests to Cloud
+Vision, then puts the results into the corresponding response files.
+
 sorno_compress_photos.py
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Compresses all photos in a directory to jpg quality.
