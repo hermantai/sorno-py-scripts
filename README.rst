@@ -184,6 +184,10 @@ sorno_gtasks.py
 ~~~~~~~~~~~~~~~
 A script version of Google Tasks
 
+sorno_ls.py
+~~~~~~~~~~~
+sorno_ls.py is just like the Unix "ls" command
+
 sorno_pick.py
 ~~~~~~~~~~~~~
 A script to prompt for choosing items generated from different sources, then
