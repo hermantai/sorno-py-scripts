@@ -109,7 +109,9 @@ class CloudVisionApp(object):
                 output_filepath = f + ".output.txt"
                 _log.info("Writing output for %s to %s", f, output_filepath)
                 with open(output_filepath, "w") as output:
-                    output.write(resp_content)
+                    output.write(
+                        resp_content.decode("unicode-escape").encode("utf8")
+                    )
 
         return 0
 
