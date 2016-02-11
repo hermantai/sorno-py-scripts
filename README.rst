@@ -218,6 +218,18 @@ The downloaded podcasts have useful file
 names (e.g contain the title of the podcast and prefixed by the published
 date).
 
+sorno_realdate.py
+~~~~~~~~~~~~~~~~~
+Prints the human readable date for timestamps
+
+Example::
+
+    $ sorno_realdate.py 1455223642 1455223642000 1455223642000000 1455223642000000000
+    1455223642: 2016-02-11 12:47:22-0800 PST in s
+    1455223642000: 2016-02-11 12:47:22-0800 PST in ms
+    1455223642000000: 2016-02-11 12:47:22-0800 PST in us
+    1455223642000000000: 2016-02-11 12:47:22-0800 PST in ns
+
 sorno_reduce_image_sizes.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Saves images with reduced sizes.
@@ -353,3 +365,7 @@ Use the following if you get an error saying "twine cannot be found" even
 twine is on your PATH::
 
     sudo env "PATH=$PATH" ./pypi_deploy_with_twine.sh
+
+If twine does not work, use the old school way::
+
+    python setup.py bdist_egg sdist upload
