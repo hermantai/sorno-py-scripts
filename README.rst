@@ -121,6 +121,26 @@ Generate an appcache file to be used for html5 application cache of a web
 application. The goal is to make the whole web app cached, so the app can be
 run offline.
 
+sorno_attach_realdate.py
+~~~~~~~~~~~~~~~~~~~~~~~~
+Attaches the actual time in human readable format for timestamps found in
+coming lines.
+
+Example::
+
+    $ cat /tmp/abc
+    once upon a time 1455225387 there is
+    1455225387 something called blah
+    and 1455225387
+    then foo
+
+    $ cat /tmp/abc |python scripts/sorno_attach_realdate.py
+    once upon a time 1455225387(2016-02-11 13:16:27-0800) there is
+    1455225387(2016-02-11 13:16:27-0800) something called blah
+    and 1455225387(2016-02-11 13:16:27-0800)
+    then foo
+
+
 sorno_cloud_vision.py
 ~~~~~~~~~~~~~~~~~~~~~
 sorno_cloud_vision.py makes using the Google Cloud Vision API easier.
