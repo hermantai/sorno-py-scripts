@@ -68,7 +68,7 @@ class CloudVisionApp(object):
 
         if self.args.api_key:
             self.endpoint = (
-                "https://vision.googleapis.com/v1alpha1/images:annotate?key=" +
+                "https://vision.googleapis.com/v1/images:annotate?key=" +
                     self.args.api_key
             )
             use_api_key = True
