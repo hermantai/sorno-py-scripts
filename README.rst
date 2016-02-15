@@ -386,6 +386,6 @@ twine is on your PATH::
 
     sudo env "PATH=$PATH" ./pypi_deploy_with_twine.sh
 
-If twine does not work, use the old school way::
+If twine does not work, use the old school::
 
-    python setup.py bdist_egg sdist upload
+    $ ./pypi_deploy.sh
