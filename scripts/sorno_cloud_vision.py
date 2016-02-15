@@ -119,6 +119,9 @@ class CloudVisionApp(object):
         service_request_json = json.dumps(
             self._create_request_body(image_content)
         )
+        if self.args.debug:
+            self._write_request_for_debug(service_request_json)
+
         (resp, content) = self.http.request(
             self.endpoint,
             "POST",
@@ -131,11 +134,20 @@ class CloudVisionApp(object):
         return content
 
     def _process_with_credentials(self, image_content):
-        service_request = self.service.images().annotate(
-            body=self._create_request_body(image_content)
-        )
-        response = service_request.execute()
+        request = self._create_request_body(image_content)
+        if self.args.debug:
+            self._write_request_for_debug(json.dumps(request, indent=4))
+
+        client_request = self.service.images().annotate(body=request)
+
+        response = client_request.execute()
         return json.dumps(response, indent=4)
+
+    def _write_request_for_debug(self, request_json):
+        request_filepath = "cloud-vision-request.json"
+        _log.info("Writing request to %s", request_filepath)
+        with open(request_filepath, "w") as f:
+            f.write(request_json)
 
     def _create_request_body(self, image_content):
         return {
@@ -229,3 +241,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
