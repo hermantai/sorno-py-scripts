@@ -56,7 +56,7 @@ from oauth2client import tools
 
 from sorno import consoleutil
 from sorno import loggingutil
-
+from sorno import stringutil
 
 # The oauth scope needed for Google Tasks API
 OAUTH_SCOPE = 'https://www.googleapis.com/auth/tasks'
@@ -465,7 +465,17 @@ class GoogleTasksConsoleApp(object):
                 if args.detail:
                     s = pprint.pformat(task)
                 else:
-                    s = task['title']
+                    try:
+                        s = stringutil.format_with_default_value(
+                            lambda k: "<%s:null>" % k,
+                            args.task_format,
+                            task,
+                        )
+                    except KeyError as ex:
+                        s = "KeyError: %s, task: %s" % (
+                            ex,
+                            pprint.pformat(task),
+                        )
 
                 if args.list_with_chars is not None:
                     _plain_logger.info("%s%s", args.list_with_chars, s)
@@ -610,6 +620,14 @@ Examples:
         "--show-notes-if-presence",
         action="store_true",
         help="shows the notes for tasks with notes",
+    )
+    parser_get_tasks.add_argument(
+        "--task-format",
+        help="The format for printing out a task, default is '%(default)s'."
+        " You can use --detail to get all the field names for tasks. If a key"
+        " specified in the format is missing, it is printed with the"
+        " form: <key:null>, in which the key is the actual name of the key.",
+        default="{title}",
     )
     parser_get_tasks.add_argument(
         "--list-with-chars",
