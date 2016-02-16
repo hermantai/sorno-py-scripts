@@ -27,6 +27,17 @@ import unittest
 from sorno import datetimeutil
 import pytz
 
+
+_LOCAL_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
+_LOCAL_TIMESTAMP_FOR_GO_REFERENCE_TIME = (
+    datetimeutil.GO_REFERENCE_TIME.astimezone(
+        datetimeutil.LOCAL_TIMEZONE
+    ).strftime(
+        _LOCAL_TIMESTAMP_FORMAT
+    )
+)
+
+
 class DatetimeutilTestCase(unittest.TestCase):
     def setUp(self):
         self.los_angeles_time_zone = pytz.timezone("America/Los_Angeles")
@@ -125,3 +136,27 @@ class DatetimeutilTestCase(unittest.TestCase):
     def test_timestamp_regex_ValidTimestampWithSuffix(self):
         m = datetimeutil.TIMESTAMP_REGEX.search("1457859600a")
         self.assertEqual("1457859600", m.group())
+
+    def test_guess_local_datetime_invalidString(self):
+        s = "abc"
+        try:
+            datetimeutil.guess_local_datetime(s)
+            self.fail("%s should not be a valid date time", s)
+        except ValueError:
+            pass
+
+    def test_guess_local_datetime_isoFormat(self):
+        s = "2006-01-02T15:04:05-0700"
+        dt = datetimeutil.guess_local_datetime(s)
+        self.assertEqual(
+            _LOCAL_TIMESTAMP_FOR_GO_REFERENCE_TIME,
+            dt.strftime(_LOCAL_TIMESTAMP_FORMAT),
+        )
+
+    def test_guess_local_datetime_isoFormatWithZ(self):
+        s = "2006-01-02T15:04:05Z"
+        dt = datetimeutil.guess_local_datetime(s)
+        self.assertEqual(
+            "2006-01-02 07:04:05",
+            dt.strftime(_LOCAL_TIMESTAMP_FORMAT),
+        )

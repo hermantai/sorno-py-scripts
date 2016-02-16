@@ -36,20 +36,35 @@ from sorno import datetimeutil
 
 _datetime_format = "%Y-%m-%d %H:%M:%S%z %Z"
 
-class App(object):
+
+class RealDateApp(object):
     def __init__(self, args):
         self.args = args
 
     def run(self):
         for n in self.args.numbers:
-            dt, unit = datetimeutil.number_to_local_datetime(n)
-            print(
-                "%s: %s in %s" % (
-                    n,
-                    dt.strftime(_datetime_format),
-                    unit,
+            try:
+                n = int(n)
+                dt, unit = datetimeutil.number_to_local_datetime(n)
+                print(
+                    "%s: %s in %s" % (
+                        n,
+                        dt.strftime(_datetime_format),
+                        unit,
+                    )
                 )
-            )
+            except ValueError:
+                try:
+                    print(
+                        "%s: %s" % (
+                            n,
+                            datetimeutil.guess_local_datetime(n).strftime(
+                                _datetime_format
+                            ),
+                        )
+                    )
+                except:
+                    print("%s: invalid datetime" % n)
 
 
 def parse_args(cmd_args):
@@ -63,7 +78,6 @@ def parse_args(cmd_args):
     parser.add_argument(
         "numbers",
         metavar="number",
-        type=int,
         nargs="+",
     )
 
@@ -74,7 +88,7 @@ def parse_args(cmd_args):
 def main():
     args = parse_args(sys.argv[1:])
 
-    app = App(args)
+    app = RealDateApp(args)
     sys.exit(app.run())
 
 
