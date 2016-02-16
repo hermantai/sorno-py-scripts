@@ -53,7 +53,7 @@ class AttachRealDateApp(object):
         self.args = args
 
     def run(self):
-        for line in fileinput.input():
+        for line in fileinput.input([]):
             sys.stdout.write(self._process(line))
         return 0
 
@@ -74,7 +74,20 @@ class AttachRealDateApp(object):
                 if len(w) >= 14:
                     try:
                         dt = datetimeutil.guess_local_datetime(w)
-                        word = "%s(%s)" % (word, dt.strftime(_datetime_format))
+                        # We want to attach a local datetime before trailing
+                        # newlines or other whitespaces for this word
+                        m = re.match(r"(.*)(\s+)", word)
+                        if m:
+                            word = m.group(1)
+                            trailing_spaces = m.group(2)
+                        else:
+                            trailing_spaces = ""
+
+                        word = "%s(%s)%s" % (
+                            word,
+                            dt.strftime(self.args.datetime_format),
+                            trailing_spaces,
+                        )
                     except ValueError as ex:
                         pass
 
@@ -90,7 +103,10 @@ class AttachRealDateApp(object):
         except ValueError:
             return potential_ts
 
-        return "%s(%s)" % (potential_ts, dt.strftime(_datetime_format))
+        return "%s(%s)" % (
+            potential_ts,
+            dt.strftime(self.args.datetime_format),
+        )
 
 
 def parse_args(cmd_args):
@@ -99,6 +115,12 @@ def parse_args(cmd_args):
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--datetime-format",
+        help="The string to format datetime. Use the formats"
+        " supported by strftime. Default: \"%(default)s\".",
+        default=_datetime_format,
     )
 
     args = parser.parse_args(cmd_args)

@@ -11,7 +11,8 @@ import sorno_attach_realdate
 
 class AttachRealDateAppTestCase(unittest.TestCase):
     def setUp(self):
-        self.args = object()
+        self.args = lambda: None
+        self.args.datetime_format = sorno_attach_realdate._datetime_format
         self.app = sorno_attach_realdate.AttachRealDateApp(self.args)
 
     def test_aggressive_process_lineWithNoDatetimeString_getItBack(self):
@@ -68,3 +69,13 @@ class AttachRealDateAppTestCase(unittest.TestCase):
             expected,
             self.app._aggressive_process(line),
         )
+
+    def test_aggressive_process_lineWithDtWithNewlineAtTheEnd(self):
+        line = "hello 2006-01-02T15:04:05-0700\n"
+        expected = "hello 2006-01-02T15:04:05-0700(2006-01-02 14:04:05)\n"
+
+        self.assertEqual(
+            expected,
+            self.app._aggressive_process(line),
+        )
+
