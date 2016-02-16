@@ -5,7 +5,7 @@ The script can print real-time or close to real-time stock quotes, historical
 quotes, and also fundamental ratios for the stock (company).
 
 
-    Copyright 2014 Herman Tai
+    Copyright 2014 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

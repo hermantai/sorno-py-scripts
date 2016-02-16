@@ -5,7 +5,7 @@ Prints the top files in terms of sizes under a directory or its subdirectories
 in terms of the size
 
 
-    Copyright 2014 Herman Tai
+    Copyright 2014 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

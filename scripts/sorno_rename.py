@@ -8,7 +8,7 @@ is the first matching group, etc.
 The script shows you all the files to be renamed and what they will be renamed
 to and prompts for a confirmation before executing the renaming.
 
-    Copyright 2015 Herman Tai
+    Copyright 2015 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

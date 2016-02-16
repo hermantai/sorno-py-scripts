@@ -18,7 +18,7 @@ Example:
         sorno_download_all.py --regex "stuff.*zip" "http://content.com"
 
 
-    Copyright 2014 Herman Tai
+    Copyright 2014 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

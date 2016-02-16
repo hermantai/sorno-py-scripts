@@ -8,7 +8,7 @@ The code is from
 http://code4reference.com/2013/07/simple-python-script-to-send-an-email/
 
 
-    Copyright 2015 Herman Tai
+    Copyright 2015 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

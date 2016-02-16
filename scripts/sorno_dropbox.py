@@ -11,7 +11,7 @@ these at http://www.dropbox.com/developers/apps. For simplicity sake, just
 give the app key "Full Dropbox" permission.
 
 
-    Copyright 2014 Herman Tai
+    Copyright 2014 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

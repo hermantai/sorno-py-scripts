@@ -6,7 +6,7 @@ saving them with lower quality jpg format. The directory structure is
 preserved but the new directory is created with a timestamp suffix.
 
 
-    Copyright 2014 Herman Tai
+    Copyright 2014 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

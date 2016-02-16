@@ -6,7 +6,7 @@ Doc: https://cloud.google.com/vision/docs
 The script generates requests for the given photos, sends the requests to Cloud
 Vision, then puts the results into the corresponding response files.
 
-    Copyright 2016 Herman Tai
+    Copyright 2016 Heung Ming Tai
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
