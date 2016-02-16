@@ -38,15 +38,17 @@ from __future__ import unicode_literals
 
 import argparse
 import fileinput
+import re
 import sys
 
 from sorno import datetimeutil
 
 
 _datetime_format = "%Y-%m-%d %H:%M:%S"
+_non_timestamp_chars_regex = re.compile("[^-_0-9a-zA-Z:]")
 
 
-class App(object):
+class AttachRealDateApp(object):
     def __init__(self, args):
         self.args = args
 
@@ -56,7 +58,29 @@ class App(object):
         return 0
 
     def _process(self, line):
-        return datetimeutil.TIMESTAMP_REGEX.sub(self._repl, line)
+        newline = datetimeutil.TIMESTAMP_REGEX.sub(self._repl, line)
+        if newline == line:
+            newline = self._aggressive_process(line)
+
+        return newline
+
+    def _aggressive_process(self, line):
+        words = []
+        for word in line.split(' '):
+            # We only parse date time strings, so at least
+            # YYYYMMDDHHmmss 14 characters
+            if len(word) >= 14:
+                w = _non_timestamp_chars_regex.sub("", word)
+                if len(w) >= 14:
+                    try:
+                        dt = datetimeutil.guess_local_datetime(w)
+                        word = "%s(%s)" % (word, dt.strftime(_datetime_format))
+                    except ValueError as ex:
+                        pass
+
+            words.append(word)
+
+        return " ".join(words)
 
     def _repl(self, match):
         potential_ts = match.group()
@@ -84,7 +108,7 @@ def parse_args(cmd_args):
 def main():
     args = parse_args(sys.argv[1:])
 
-    app = App(args)
+    app = AttachRealDateApp(args)
     sys.exit(app.run())
 
 

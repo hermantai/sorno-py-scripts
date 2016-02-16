@@ -139,4 +139,7 @@ def guess_local_datetime(s):
             continue
 
     dt = dateutilparser.parse(s)
-    return dt.astimezone(LOCAL_TIMEZONE)
+    if dt.tzinfo:
+        return dt.astimezone(LOCAL_TIMEZONE)
+    else:
+        return LOCAL_TIMEZONE.localize(dt)

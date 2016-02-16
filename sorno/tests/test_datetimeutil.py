@@ -153,6 +153,14 @@ class DatetimeutilTestCase(unittest.TestCase):
             dt.strftime(_LOCAL_TIMESTAMP_FORMAT),
         )
 
+    def test_guess_local_datetime_isoDateFormat(self):
+        s = "2006-01-02"
+        dt = datetimeutil.guess_local_datetime(s)
+        self.assertEqual(
+            "2006-01-02 00:00:00",
+            dt.strftime(_LOCAL_TIMESTAMP_FORMAT),
+        )
+
     def test_guess_local_datetime_isoFormatWithZ(self):
         s = "2006-01-02T15:04:05Z"
         dt = datetimeutil.guess_local_datetime(s)
