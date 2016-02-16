@@ -11,9 +11,9 @@ Example:
     then foo
 
     $ cat /tmp/abc |python scripts/sorno_attach_realdate.py
-    once upon a time 1455225387(2016-02-11 13:16:27-0800) there is
-    1455225387(2016-02-11 13:16:27-0800) something called blah
-    and 1455225387(2016-02-11 13:16:27-0800)
+    once upon a time 1455225387(2016-02-11 13:16:27) there is
+    1455225387(2016-02-11 13:16:27) something called blah
+    and 1455225387(2016-02-11 13:16:27)
     then foo
 
 
@@ -43,7 +43,7 @@ import sys
 from sorno import datetimeutil
 
 
-_datetime_format = "%Y-%m-%d %H:%M:%S%z"
+_datetime_format = "%Y-%m-%d %H:%M:%S"
 
 
 class App(object):
