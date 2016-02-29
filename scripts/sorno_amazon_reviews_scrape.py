@@ -41,6 +41,10 @@ _plain_logger = None  # will be created in main()
 
 
 class App(object):
+    HEADERS = {
+        'user-agent': 'Mozilla/5.0 ;Windows NT 6.1; WOW64; Trident/7.0; rv:11.0; like Gecko',
+    }
+
     def __init__(self, url, stop_at=-1):
         self.url = url
         self.stop_at = stop_at
@@ -77,6 +81,7 @@ class App(object):
             cur_page_items = self.get_items_from_page_tree(
                 self.get_tree_from_url(new_url)
             )
+            _log.debug("%s items fetched", len(cur_page_items))
 
             all_items.extend(cur_page_items)
 
@@ -154,7 +159,7 @@ class App(object):
 
     def get_tree_from_url(self, url):
         _log.debug("Fetch from url [%s]", url)
-        website_text = requests.get(url).text
+        website_text = requests.get(url, headers=self.HEADERS).text
         return html.fromstring(website_text)
 
     def get_items_from_page_tree(self, tree):
