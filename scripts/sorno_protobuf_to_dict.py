@@ -36,7 +36,7 @@ class App(object):
 
     def run(self):
         with open(self.args.file) as f:
-            content = f.read()
+            content = f.read().strip()
 
         # make any protobuf field key which has protobuf value  to be a dict key
         # fld {...} => "fld": {...}
