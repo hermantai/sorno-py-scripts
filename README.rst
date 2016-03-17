@@ -238,6 +238,12 @@ The downloaded podcasts have useful file
 names (e.g contain the title of the podcast and prefixed by the published
 date).
 
+sorno_protobuf_to_dict.py
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Converts text format of protobufs to python dict.
+
+The script launches ipython for you to play with the parsed python dict.
+
 sorno_realdate.py
 ~~~~~~~~~~~~~~~~~
 Prints the human readable date for timestamps

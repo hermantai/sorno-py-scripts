@@ -18,13 +18,13 @@ def break_here():
     pdb.set_trace()
 
 
-def ipython_here():
-    _my_embed(stack_depth=3)
+def ipython_here(**kwargs):
+    _my_embed(stack_depth=3, **kwargs)
 
 
 def _my_embed(**kwargs):
     """
-    Since we need to control sthe stack_depth, the only way is to
+    Since we need to control the stack_depth, the only way is to
     copy-and-paste the implementation and change the stack_depth argument :(
     """
 
