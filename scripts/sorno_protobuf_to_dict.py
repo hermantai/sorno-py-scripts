@@ -24,6 +24,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import argparse
+from pprint import pprint
 import re
 import sys
 
@@ -38,19 +39,18 @@ class App(object):
         with open(self.args.file) as f:
             content = f.read().strip()
 
-        # make any protobuf field key which has protobuf value  to be a dict key
+        # combine all the fields into one protobuf
+        obj_str = "res {\n%s\n}" % content
+
+        # make any protobuf field key which has protobuf value to be a dict key
         # fld {...} => "fld": {...}
-        obj_str = re.sub(r'([^ ]+) \{', r'"\1": {', content)
+        obj_str = re.sub(r'(\S+) \{', r'"\1": {', obj_str)
 
         # make any non-protobuf field to be a dict key
         # fld: ... => "fld": ...
-        obj_str = re.sub(r'([^ "]+): ', r'"\1": ', obj_str)
+        obj_str = re.sub(r'([^\s"]+): ', r'"\1": ', obj_str)
 
-        # separate all fields...
-        # "fld": 123 => "fld": 123,
-        obj_str = re.sub("(?<!\{)\n", ",\n", obj_str)
-        # make it a root dict
-        obj_str = "{%s}" % obj_str
+        obj_str, s = get_value(obj_str, True)
 
         print("Your object before python eval:")
         print(obj_str)
@@ -60,12 +60,98 @@ class App(object):
         functions = ("pprint",)
         header += ",".join(sorted(functions))
 
-        from pprint import pprint
-        obj = eval(obj_str)
+        protobuf = eval(obj_str)
+
+        print("Your object before converting lists to python dict")
+        pprint(protobuf)
+        obj = protobuf_to_dict(protobuf)
+
+        obj = obj['res']
 
         debuggingutil.ipython_here(header=header)
 
         return 0
+
+
+def protobuf_to_dict(mixed):
+    if type(mixed) == list:
+        if (type(mixed[0]) == list):
+            return [protobuf_to_dict(protobuf) for protobuf in mixed]
+        else:
+            return {
+                mixed[0]: process_protobuf_fields(mixed[1])
+            }
+    else:
+        return mixed
+
+
+def process_protobuf_fields(fields):
+    d = {}
+    for k, v in fields:
+        if type(v) == list:
+            processed = process_protobuf_fields(v)
+        else:
+            processed = v
+
+        if k in d:
+            if type(d[k]) == list:
+                d[k].append(processed)
+            else:
+                d[k] = [d[k], processed]
+        else:
+            d[k] = processed
+
+    return d
+
+
+def get_value(s, inside_protobuf):
+    new_str = ""
+    w = ""
+    in_quote = False
+    while s:
+        c = s[0]
+        if c == ":":
+            if in_quote:
+                w += c
+            elif s.startswith(": {"):
+                # we have a key in "w", and the value is a protobuf
+                val, s = get_value(s[3:], True)
+                new_str += ",[%s, [%s]]" % (w, val)
+                w = ""
+                continue
+            else:
+                # we have a key in "w", and the value is not protobuf
+                val, s = get_value(s[2:], False)
+                new_str += ",[%s, %s]" % (w, val)
+                w = ""
+                continue
+        elif c == "}":
+            if in_quote:
+                w += c
+            else:
+                if w:
+                    # we are at the last value of the last field of a protobuf
+                    return w, s[1:]
+                else:
+                    # we are done with this protobuf
+                    return new_str.lstrip(','), s[1:]
+        elif c == '"':
+            in_quote = not in_quote
+            w += c
+        elif c == ' ' or c == '\n':
+            if in_quote:
+                w += c
+            elif w:
+                if not inside_protobuf:
+                    return w, s[1:]
+        else:
+            w += c
+
+        s = s[1:]
+
+    if w:
+        new_str += w
+    return new_str.lstrip(','), s
 
 
 def parse_args(cmd_args):
