@@ -29,6 +29,7 @@ import re
 import sys
 
 from sorno import debuggingutil
+from sorno import sornomisc
 
 
 class App(object):
@@ -39,7 +40,8 @@ class App(object):
         with open(self.args.file) as f:
             content = f.read().strip()
 
-        # combine all the fields into one protobuf
+        # combine all the fields into one protobuf that has the field "res" and
+        # the field's value is the given protobufs read from the file
         obj_str = "res {\n%s\n}" % content
 
         # make any protobuf field key which has protobuf value to be a dict key
@@ -50,7 +52,7 @@ class App(object):
         # fld: ... => "fld": ...
         obj_str = re.sub(r'([^\s"]+): ', r'"\1": ', obj_str)
 
-        obj_str, s = get_value(obj_str, True)
+        obj_str, s = protobuf_str_to_nested_list_str(obj_str, True)
 
         print("Your object before python eval:")
         print(obj_str)
@@ -64,23 +66,25 @@ class App(object):
 
         print("Your object before converting lists to python dict")
         pprint(protobuf)
-        obj = protobuf_to_dict(protobuf)
+        obj = protobuf_nested_ls_to_obj(protobuf)
 
-        obj = obj['res']
+        obj = obj.res
 
         debuggingutil.ipython_here(header=header)
 
         return 0
 
 
-def protobuf_to_dict(mixed):
+def protobuf_nested_ls_to_obj(mixed):
     if type(mixed) == list:
         if (type(mixed[0]) == list):
-            return [protobuf_to_dict(protobuf) for protobuf in mixed]
+            return [protobuf_nested_ls_to_obj(protobuf) for protobuf in mixed]
         else:
-            return {
-                mixed[0]: process_protobuf_fields(mixed[1])
-            }
+            return sornomisc.Bunch(
+                    **{
+                        mixed[0]: process_protobuf_fields(mixed[1])
+                    }
+            )
     else:
         return mixed
 
@@ -101,10 +105,10 @@ def process_protobuf_fields(fields):
         else:
             d[k] = processed
 
-    return d
+    return sornomisc.Bunch(**d)
 
 
-def get_value(s, inside_protobuf):
+def protobuf_str_to_nested_list_str(s, inside_protobuf):
     new_str = ""
     w = ""
     in_quote = False
@@ -115,13 +119,13 @@ def get_value(s, inside_protobuf):
                 w += c
             elif s.startswith(": {"):
                 # we have a key in "w", and the value is a protobuf
-                val, s = get_value(s[3:], True)
+                val, s = protobuf_str_to_nested_list_str(s[3:], True)
                 new_str += ",[%s, [%s]]" % (w, val)
                 w = ""
                 continue
             else:
                 # we have a key in "w", and the value is not protobuf
-                val, s = get_value(s[2:], False)
+                val, s = protobuf_str_to_nested_list_str(s[2:], False)
                 new_str += ",[%s, %s]" % (w, val)
                 w = ""
                 continue
