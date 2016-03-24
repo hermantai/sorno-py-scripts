@@ -176,6 +176,26 @@ sorno_facts.py
 ~~~~~~~~~~~~~~~~~~~~
 Prints out a random fact for fun
 
+sorno_gcloud_pubsub_demo.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Demos the use of Google Cloud Pub/Sub.
+
+The script can be run as a publisher or a subscriber for a Pub/Sub topic.
+
+You need to get the json credentials file before using this script. See https://developers.google.com/identity/protocols/application-default-credentials#howtheywork.
+
+Quickstart:
+
+    To run as a publisher:
+
+        sorno_gcloud_pubsub_demo.py --google-json-credentials <your-json-credentials-file> --publisher
+
+    To run as a subscriber:
+
+        sorno_gcloud_pubsub_demo.py --google-json-credentials <your-json-credentials-file>  --subscriber
+
+Reference: https://cloud.google.com/pubsub/configure
+
 sorno_gdoc.py
 ~~~~~~~~~~~~~~~~~
 A command line client for accessing Google Docs. The API doc used to implement
