@@ -22,6 +22,7 @@ from __future__ import unicode_literals
 
 import datetime
 import re
+import time
 import unittest
 
 from sorno import datetimeutil
@@ -63,6 +64,17 @@ class DatetimeutilTestCase(unittest.TestCase):
         self.assertEqual(
             1457863200,
             datetimeutil.datetime_to_timestamp(d),
+        )
+
+    def test_datetime_to_timestamp_differentTimeZone(self):
+        mst_dt = datetimeutil.GO_REFERENCE_TIME
+        los_angeles_dt = datetimeutil.convert_timezone(
+            mst_dt,
+            self.los_angeles_time_zone,
+        )
+        self.assertEqual(
+            datetimeutil.datetime_to_timestamp(mst_dt),
+            datetimeutil.datetime_to_timestamp(los_angeles_dt),
         )
 
     def test_timestamp_to_local_datetime_pstWorksFine(self):
@@ -168,3 +180,25 @@ class DatetimeutilTestCase(unittest.TestCase):
             "2006-01-02 07:04:05",
             dt.strftime(_LOCAL_TIMESTAMP_FORMAT),
         )
+
+    def test_strftime(self):
+        # convert go time to local timezone first
+        dt = datetimeutil.GO_REFERENCE_TIME.astimezone(
+            datetimeutil.LOCAL_TIMEZONE
+        )
+        result_from_dt = datetimeutil.strftime(
+            datetimeutil.ISO_FORMAT,
+            dt,
+        )
+
+        result_from_ts = datetimeutil.strftime(
+            datetimeutil.ISO_FORMAT,
+            time.mktime(dt.timetuple()),
+        )
+        result_from_struct_time = datetimeutil.strftime(
+            datetimeutil.ISO_FORMAT,
+            dt.timetuple(),
+        )
+
+        self.assertEqual(result_from_dt, result_from_ts)
+        self.assertEqual(result_from_ts, result_from_struct_time)

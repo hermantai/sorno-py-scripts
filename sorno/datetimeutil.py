@@ -16,6 +16,7 @@ import time
 
 from dateutil import parser as dateutilparser
 import pytz
+import six
 import tzlocal
 
 ISO_FORMAT= "%Y-%m-%dT%H:%M:%S%z"
@@ -59,6 +60,13 @@ def real_localize(dt, tz):
     return tz.normalize(tz.localize(dt))
 
 
+def convert_timezone(dt, tz=LOCAL_TIMEZONE):
+    """Converts a datetime object to a specific timezone.
+
+    By default, the datetime object is converted into local timezone."""
+    return tz.normalize(dt.astimezone(tz))
+
+
 def datetime_to_timestamp(dt):
     """Converts datetime to a UNIX timestamp.
 
@@ -68,6 +76,9 @@ def datetime_to_timestamp(dt):
     Returns:
         An integer that represents the converted UNIX timestamp in seconds.
     """
+    # time.mktime can only take local time, so need to convert
+    # dt to local timezone first
+    dt = convert_timezone(dt, tz=LOCAL_TIMEZONE)
     return time.mktime(dt.timetuple())
 
 
@@ -109,6 +120,9 @@ def number_to_local_datetime(number):
     return dt, _timestamp_units[i]
 
 
+# A tuple of 2-tuple's. The first element of a 2-tuple is the format to match
+# against a string to extract the datetime, the element is the conversion
+# method that probably converts the datetime object to local time zone.
 _COMMON_DATETIME_FORMATS_AND_LAMBDA = (
     # %z only works in Python 3.2 or later
     # (ISO_FORMAT, lambda dt: dt.astimezone(LOCAL_TIMEZONE)),
@@ -143,3 +157,25 @@ def guess_local_datetime(s):
         return dt.astimezone(LOCAL_TIMEZONE)
     else:
         return LOCAL_TIMEZONE.localize(dt)
+
+
+def strftime(format, mixed, localize=False):
+    """Formats a time to a string.
+
+    Just like time.strftime
+    (https://docs.python.org/2/library/time.html#time.strftime) but this function
+    can take different types of "time" object. It can take a timestamp in
+    seconds, a datetime object, or a struct_time
+    (https://docs.python.org/2/library/time.html#time.struct_time).
+
+    If mixed is a datetime with a timezone, the result of strftime
+    """
+    dt = None
+    if type(mixed) in six.integer_types or type(mixed) == float:
+        dt = timestamp_to_local_datetime(mixed)
+    elif type(mixed) == datetime.datetime:
+        dt = mixed
+    elif type(mixed) == time.struct_time:
+        dt = timestamp_to_local_datetime(time.mktime(mixed))
+
+    return dt.strftime(format)
