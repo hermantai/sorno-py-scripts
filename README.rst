@@ -211,7 +211,7 @@ https://developers.google.com/drive/web/quickstart/quickstart-python
 
 Currently, you can upload files with the script.
 
-sorno_git_here.py
+sorno_locate_git.py
 ~~~~~~~~~~~~~~~~~
 Gets the remote location of a local file/directory from a local git repository.
 

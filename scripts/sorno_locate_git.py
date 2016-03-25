@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""sorno_git_here gets the remote location of a local file/directory from a
+"""sorno_locate_git gets the remote location of a local file/directory from a
 local git repository.
 
 
