@@ -211,6 +211,10 @@ https://developers.google.com/drive/web/quickstart/quickstart-python
 
 Currently, you can upload files with the script.
 
+sorno_git_here.py
+~~~~~~~~~~~~~~~~~
+Gets the remote location of a local file/directory from a local git repository.
+
 sorno_grepchunks.py
 ~~~~~~~~~~~~~~~~~~~
 Oftenly, you want to treat multiple lines as one chunk and see if it matches a
