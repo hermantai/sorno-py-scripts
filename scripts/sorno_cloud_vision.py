@@ -94,7 +94,7 @@ class CloudVisionApp(object):
             self.service = discovery.build(
                 'vision',
                 'v1',
-                self.http,
+                http=self.http,
                 discoveryServiceUrl=api_discovery_file,
             )
 
