@@ -176,6 +176,37 @@ sorno_facts.py
 ~~~~~~~~~~~~~~~~~~~~
 Prints out a random fact for fun
 
+sorno_feedly.py
+~~~~~~~~~~~~~~~
+Manages feeds stored in Feedly.
+
+This script does not implement an oauth flow, so just get a developer token
+from https://developer.feedly.com/v3/developer to use this script.
+
+Quickstart:
+
+    First, get a developer access token through
+    https://developer.feedly.com/v3/developer, then set the environment
+    variable SORNO_FEEDLY_ACCESS_TOKEN.
+
+    ::
+
+        $ export SORNO_FEEDLY_ACCESS_TOKEN='YOUR ACCESS TOKEN HERE'
+
+    Print all categories::
+
+        $ sorno_feedly.py categories
+
+    Print all feeds::
+
+        $ sorno_feedly.py categories
+
+    Print all entries, duplicated entries, and get prompted for marking
+    duplicated entries to read::
+
+        $ sorno_feedly.py entries
+
+
 sorno_gcloud_pubsub_demo.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Demos the use of Google Cloud Pub/Sub.
@@ -212,7 +243,7 @@ https://developers.google.com/drive/web/quickstart/quickstart-python
 Currently, you can upload files with the script.
 
 sorno_locate_git.py
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 Gets the remote location of a local file/directory from a local git repository.
 
 sorno_grepchunks.py
