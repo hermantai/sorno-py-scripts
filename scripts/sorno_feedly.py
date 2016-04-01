@@ -201,7 +201,7 @@ class FeedlyApp(object):
 
         if num_entries == 0:
             print("None")
-        else:
+        elif do_cleanup:
             ans = consoleutil.confirm(
                 "Mark %d duplicated entries as read?" % num_entries)
             if ans:
