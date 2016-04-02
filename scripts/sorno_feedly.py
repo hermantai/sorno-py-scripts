@@ -253,10 +253,10 @@ class FeedlyApp(object):
             indent + "Crawled:",
             crawled.strftime("%Y/%m/%d %H:%M"),
         )
-        print(
-            indent + "Origin:",
-            self._get_null_safe(entry, 'origin', 'title'),
-        )
+        origin = self._get_null_safe(entry, 'origin', 'title')
+        if origin:
+            origin = origin.encode("utf8")
+        print(indent + "Origin:", origin)
         print(
             indent + "Source:",
             self._get_null_safe(entry, 'alternate', 'href'),
