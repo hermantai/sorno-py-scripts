@@ -364,6 +364,10 @@ def main():
     parser, args = parse_args(app, sys.argv[1:])
 
     loggingutil.setup_logger(_log, debug=args.debug)
+    if not args.debug:
+        # suppress noisy modules
+        _log.getChild("requests").setLevel(logging.WARN)
+
     _plain_logger = loggingutil.create_plain_logger(
         "PLAIN",
         debug=args.debug,
