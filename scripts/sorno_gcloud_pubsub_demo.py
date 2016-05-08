@@ -102,6 +102,7 @@ class App(object):
         _log.info("Full topic name: %s", full_topic_name)
 
         topic = None
+        _log.info("Find or create topic %s...", full_topic_name)
         try:
             topic = client.projects().topics().get(topic=full_topic_name).execute()
         except googleapiclient.errors.HttpError as error:
@@ -159,6 +160,7 @@ class App(object):
         }
 
         subscription = None
+        _log.info("Find or create subscription %s...", full_subscription_name)
         try:
             subscription = client.projects().subscriptions().get(
                 subscription=full_subscription_name
