@@ -206,6 +206,19 @@ Quickstart:
 
         $ sorno_feedly.py entries
 
+sorno_gcloud_bigquery.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Demos the use of Google Cloud BigQuery
+
+The script can be run to get the result of a query.
+
+You need to get the json credentials file before using this script. See https://developers.google.com/identity/protocols/application-default-credentials#howtheywork.
+
+Quickstart:
+
+    sorno_gcloud_bigquery.py --google-json-credentials <your-json-credentials-file> "SELECT author,text FROM [bigquery-public-data:hacker_news.comments] where text is not null LIMIT 10"
+
+Reference: https://cloud.google.com/bigquery/create-simple-app-api#authorizing
 
 sorno_gcloud_pubsub_demo.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
