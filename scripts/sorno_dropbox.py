@@ -37,7 +37,8 @@ import pprint
 import re
 import sys
 
-from dropbox import client, rest, session
+from dropbox import files as dbfiles
+from dropbox import oauth, rest, session, dropbox
 import six
 from sorno import loggingutil
 
@@ -87,15 +88,9 @@ class DropboxApp(object):
         self.api_client = None
         try:
             serialized_token = open(DROPBOX_TOKEN_FILE).read()
-            if serialized_token.startswith('oauth1:'):
-                access_key, access_secret = serialized_token[len('oauth1:'):].split(':', 1)
-                sess = session.DropboxSession(self.app_key, self.app_secret)
-                sess.set_token(access_key, access_secret)
-                self.api_client = client.DropboxClient(sess)
-                _LOG.debug("[loaded OAuth 1 access token]")
-            elif serialized_token.startswith('oauth2:'):
+            if serialized_token.startswith('oauth2:'):
                 access_token = serialized_token[len('oauth2:'):]
-                self.api_client = client.DropboxClient(access_token)
+                self.api_client = dropbox.Dropbox(access_token)
                 _LOG.debug("[loaded OAuth 2 access token]")
             else:
                 _LOG.warn("Malformed access token in %r.", DROPBOX_TOKEN_FILE)
@@ -105,43 +100,41 @@ class DropboxApp(object):
     @command(login_required=True)
     def do_ls(self, args):
         dirpath = "" if not args.dirpath else args.dirpath
-        fileslist = self.ls(dirpath)
-        if fileslist is None:
-            _PLAIN_LOGGER.error(
-                "The dirpath [%s] does not exist.",
-                dirpath,
-            )
-            return 1
+        if dirpath == "/":
+            dirpath = ""
+        cursor = None
+        while True:
+            entries, cursor = self.ls(dirpath, cursor=cursor)
+            for entry in entries:
+                if args.detail:
+                    _PLAIN_LOGGER.info(
+                        pprint.pformat(self.metadata_to_dict(entry)))
+                else:
+                    _PLAIN_LOGGER.info(entry.name)
 
-        for name in fileslist:
-            _PLAIN_LOGGER.info(name)
+            if cursor is None:
+                break
 
         return 0
 
-    def ls(self, dirpath):
+    def ls(self, dirpath, cursor=None):
         """List files in current remote directory
 
         Returns:
             A list of file/directory names in strings under the given dirpath.
             Return None if dirpath does not exist.
         """
-        try:
-            resp = self.api_client.metadata(dirpath)
-            _LOG.debug(resp)
-            if resp.get('is_deleted'):
-                return None
-        except rest.ErrorResponse as e:
-            if e.status == 404:
-                return None
-            raise
+        if cursor:
+            resp = self.api_client.files_list_folder_continue(cursor)
+        else:
+            resp = self.api_client.files_list_folder(dirpath)
 
-        if 'contents' in resp:
-            names = []
-            for f in resp['contents']:
-                name = os.path.basename(f['path'])
-                names.append(name)
-            return names
-        return None
+        _LOG.debug(resp)
+
+        if resp.has_more:
+            cursor = resp.cursor
+
+        return resp.entries, cursor
 
     def is_exists(self, filepath):
       try:
@@ -159,7 +152,7 @@ class DropboxApp(object):
 
     def login(self):
         """log in to a Dropbox account"""
-        flow = client.DropboxOAuth2FlowNoRedirect(self.app_key, self.app_secret)
+        flow = oauth.DropboxOAuth2FlowNoRedirect(self.app_key, self.app_secret)
         authorize_url = flow.start()
         _PLAIN_LOGGER.info("1. Go to: " + authorize_url + "\n")
         _PLAIN_LOGGER.info("2. Click \"Allow\" (you might have to log in first).\n")
@@ -179,8 +172,8 @@ class DropboxApp(object):
             "The access token is written to the file %s",
             DROPBOX_TOKEN_FILE,
         )
-        self.api_client = client.DropboxClient(access_token)
-        _LOG.debug("Client info: %s", self.api_client.account_info())
+        self.api_client = dropbox.Dropbox(access_token)
+        _LOG.debug("Client info: %s", self.api_client.users_get_current_account())
 
     @command(login_required=True)
     def do_copydir(self, args):
@@ -236,14 +229,14 @@ class DropboxApp(object):
         Examples:
         sorno_dropbox.py get file.txt ~/dropbox-file.txt
         """
-        f, metadata = self.api_client.get_file_and_metadata(from_path)
+        metadata = self.api_client.files_download_to_file(
+            to_path,
+            from_path,
+        )
 
-        _PLAIN_LOGGER.info('Metadata: %s', pprint.pformat(metadata))
-
-        with open(to_path, "wb") as to_file:
-            to_file.write(f.read())
-
-        f.close()
+        _PLAIN_LOGGER.info(
+            'Metadata: %s',
+            pprint.pformat(self.metadata_to_dict(metadata)))
 
     @command()
     def do_mkdir(self, args):
@@ -265,24 +258,45 @@ class DropboxApp(object):
         Examples:
         sorno_dropbox.py put ~/test.txt dropbox-copy-test.txt
         """
-        from_file = open(from_path, "rb")
-        self.api_client.put_file(to_path, from_file, overwrite=overwrite)
+        with open(from_path, "rb") as from_file:
+            if overwrite:
+                writemode = dbfiles.WriteMode.overwrite
+            else:
+                writemode = dbfiles.WriteMode.add
+            self.api_client.files_upload(
+                from_file,
+                to_path,
+                mode=writemode,
+            )
 
     @command(login_required=True)
     def do_search(self, args):
         dirpath = "" if not args.dirpath else args.dirpath
-        results = self.search(dirpath, args.query)
-        for r in results:
-            if args.detail:
-                _PLAIN_LOGGER.info(pprint.pformat(r))
-            else:
-                _PLAIN_LOGGER.info(r['path'])
+        start = 0
+        while True:
+            results, start = self.search(dirpath, args.query, start=start)
+            for r in results:
+                metadata = r.metadata
+                if args.detail:
+                    _PLAIN_LOGGER.info(
+                        pprint.pformat(self.metadata_to_dict(metadata)))
+                else:
+                    _PLAIN_LOGGER.info(metadata.name)
+            if not start:
+                break
 
         return 0
 
-    def search(self, dirpath, query):
-        results = self.api_client.search(dirpath, query)
-        return results
+    def search(self, dirpath, query, start=None):
+        if start is not None:
+            result = self.api_client.files_search(dirpath, query, start=start)
+        else:
+            result = self.api_client.files_search(dirpath, query)
+
+        start = None
+        if result.more:
+            start = result.start
+        return result.matches, start
 
     def prompt(self, msg):
         ans = six.moves.input(msg)
@@ -290,6 +304,9 @@ class DropboxApp(object):
             return
         else:
             raise Exception("aborted!")
+
+    def metadata_to_dict(self, metadata):
+        return {n: getattr(metadata, n) for n in metadata._all_field_names_}
 
 
 def parse_args(app_obj, cmd_args):
@@ -322,6 +339,11 @@ def parse_args(app_obj, cmd_args):
         nargs="?",
         help="The path of the directory in dropbox. For the root directory,"
         " use an empty string",
+    )
+    parser_ls.add_argument(
+        "--detail",
+        help="If true, the whole details of the results are printed out",
+        action="store_true",
     )
     parser_ls.set_defaults(func=app_obj.do_ls)
 
