@@ -40,6 +40,7 @@ import os
 import pprint
 import subprocess
 import sys
+import tempfile
 
 import apiclient
 from apiclient.discovery import build
@@ -51,7 +52,7 @@ from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
 from sorno import loggingutil
-
+from sorno import webutil
 
 _LOG = logging.getLogger(__name__)
 
@@ -125,21 +126,34 @@ class App(object):
         _LOG.info("Will upload files: %s" , ", ".join(filepaths))
 
         for filepath in filepaths:
-            _LOG.info("Upload file: %s", filepath)
-            self.ensure_mimetype_exists(filepath)
-            media = MediaFileUpload(
-                filepath,
-            )
+            if (filepath.startswith("http://") or
+                filepath.startswith("https://")):
+                _LOG.info("Will upload file %s to Google Drive", filepath)
+                basefn = os.path.basename(filepath)
+                dest = os.path.join(tempfile.tempdir, basefn)
+                _LOG.info("Download %s to %s", filepath, dest)
+                webutil.download_file(filepath, dest)
+                _LOG.info("Upload %s to Google Drive", dest)
+                self.upload_file(dest)
+            else:
+                _LOG.info("Upload file: %s", filepath)
+                self.upload_file(filepath)
 
-            file_title = os.path.basename(filepath)
-            response = self.drive_service.files().insert(
-                media_body=media,
-                body={
-                    'title': file_title,
-                },
-            ).execute()
+    def upload_file(self, filepath):
+        self.ensure_mimetype_exists(filepath)
+        media = MediaFileUpload(
+            filepath,
+        )
 
-            pprint.pprint(response)
+        file_title = os.path.basename(filepath)
+        response = self.drive_service.files().insert(
+            media_body=media,
+            body={
+                'title': file_title,
+            },
+        ).execute()
+
+        pprint.pprint(response)
 
     def download_action(self, args):
         _LOG.error("Not implemented, yet")
