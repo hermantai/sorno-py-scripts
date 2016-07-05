@@ -51,6 +51,7 @@ import httplib2
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
+from sorno import consoleutil
 from sorno import loggingutil
 from sorno import webutil
 
@@ -63,6 +64,8 @@ OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive'
 REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
 CREDENTIALS_FILE = os.path.expanduser("~/.sorno_gdrive-google-drive-api.cred")
+
+GDRIVE_MIMETYPE_FOLDER = "application/vnd.google-apps.folder"
 
 
 class App(object):
@@ -116,7 +119,51 @@ class App(object):
         http = httplib2.Http()
         http = credentials.authorize(http)
 
-        self.drive_service = build('drive', 'v2', http=http)
+        self.drive_service = build('drive', 'v3', http=http)
+
+    def list_action(self, args):
+        self.auth(args.use_credentials_cache)
+        for f in self.list_path(args.path):
+            print(f['name'])
+
+    def list_path(self, path):
+        if not path:
+            path = '/'
+
+        if path == '/':
+            return self.list_path_by_parent_id('root')
+
+        response = self.drive_service.files().list(
+            q="name contains '%s'" % path,
+            fields='nextPageToken, files(id, name, mimeType, parents)').execute()
+
+        folders = [
+            f for f in response['files']
+            if f['mimeType'] == GDRIVE_MIMETYPE_FOLDER
+        ]
+        if len(folders) == 0:
+            raise ResourceNotExists('Path "%s" not found' % path)
+
+        if len(folders) == 1:
+            folder = folders[0]
+        else:
+            c = consoleutil.choose_item(
+                "Choose the directory to list: ",
+                [f['name'] for f in folders],
+            )
+            folder = folders[c]
+
+        return self.list_path_by_parent_id(folder['id'])
+
+    def get_file_metadata(self, file_id):
+        return self.drive_service.files().get(fileId=file_id).execute()
+
+    def list_path_by_parent_id(self, file_id):
+        response = self.drive_service.files().list(
+            q="'%s' in parents" % file_id,
+            fields='nextPageToken, files(id, name, mimeType, parents)').execute()
+        return response['files']
+
 
     def upload_action(self, args):
         self.auth(args.use_credentials_cache)
@@ -176,6 +223,10 @@ class App(object):
         assert mimetypes.guess_type(filepath)
 
 
+class ResourceNotExists(Exception):
+    pass
+
+
 def main():
     app = App()
     args = parse_args(app, sys.argv[1:])
@@ -206,6 +257,21 @@ def parse_args(app_obj, cmd_args):
 
     subparsers = parser.add_subparsers(title="Subcommands")
 
+    #
+    # list
+    #
+
+    parser_list = subparsers.add_parser("list")
+    parser_list.add_argument(
+        "path",
+        nargs="?",
+    )
+    parser_list.set_defaults(func=app_obj.list_action)
+
+    #
+    # upload
+    #
+
     parser_upload = subparsers.add_parser("upload")
     parser_upload.add_argument(
         "files",
@@ -213,6 +279,10 @@ def parse_args(app_obj, cmd_args):
         help="Local filepaths for files to be uploaded",
     )
     parser_upload.set_defaults(func=app_obj.upload_action)
+
+    #
+    # downlload
+    #
 
     parser_download = subparsers.add_parser("download")
     parser_download.set_defaults(func=app_obj.download_action)
@@ -223,4 +293,3 @@ def parse_args(app_obj, cmd_args):
 
 if __name__ == '__main__':
     main()
-

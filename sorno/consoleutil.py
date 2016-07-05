@@ -347,6 +347,41 @@ def confirm(prompt):
         if ans in ("n", "no", "f", "false"):
             return False
 
+def choose_item(prompt, items):
+    """Asks the console application user to choose an item from a list
+
+    The user is expected to enter the n'th item from items, 1-based.
+
+    If the user enters a wrong value, an error is printed and has to choose
+    again.
+
+    Args:
+        prompt (str): The question to ask the user.
+    Returns:
+        int: The integer chosen by the user, 0-based.
+    """
+    n = len(items)
+    num_of_digits = 0
+    while n:
+        n //= 10
+        num_of_digits += 1
+
+    while True:
+        for i, item in enumerate(items):
+            print("%*s) %s" % (num_of_digits, i + 1, item))
+
+        ans = six.moves.input(prompt)
+
+        try:
+            choice = int(ans)
+            if choice < 1 or choice > len(items):
+                print("Choose items between 1 to %d", len(items))
+                continue
+
+            return choice - 1
+        except ValueError:
+            print("Choose items between 1 to %d", len(items))
+
 
 if __name__ == "__main__":
     rows = [
