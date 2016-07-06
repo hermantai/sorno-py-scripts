@@ -102,7 +102,7 @@ class App(object):
         if os.path.exists(CREDENTIALS_FILE) and use_credentials_cache:
             storage = Storage(CREDENTIALS_FILE)
             credentials = storage.get()
-            print("Use old credentials")
+            _LOG.info("Use old credentials")
             need_get_code = False
 
         if need_get_code:
@@ -123,8 +123,13 @@ class App(object):
 
     def list_action(self, args):
         self.auth(args.use_credentials_cache)
-        for f in self.list_path(args.path):
-            print(f['name'])
+        files = self.list_path(args.path)
+        for f in files:
+            if args.detail:
+                pprint.pprint(self.add_properties_to_file_metadata(f))
+            else:
+                print(f['name'])
+        _LOG.info("Total of %s items", len(files))
 
     def list_path(self, path):
         if not path:
@@ -133,74 +138,92 @@ class App(object):
         if path == '/':
             return self.list_path_by_parent_id('root')
 
+        folder = self.get_folder_by_name(path)
+        return self.list_path_by_parent_id(folder['id'])
+
+    def get_folder_by_name(self, folder_name):
         response = self.drive_service.files().list(
-            q="name contains '%s'" % path,
-            fields='nextPageToken, files(id, name, mimeType, parents)').execute()
+            q="name contains '%s' and trashed = false" % folder_name,
+            fields='nextPageToken, files(id, name, mimeType, parents)'
+        ).execute()
 
         folders = [
             f for f in response['files']
             if f['mimeType'] == GDRIVE_MIMETYPE_FOLDER
         ]
         if len(folders) == 0:
-            raise ResourceNotExists('Path "%s" not found' % path)
+            raise ResourceNotExists('Path "%s" not found' % folder_name)
 
         if len(folders) == 1:
             folder = folders[0]
         else:
             c = consoleutil.choose_item(
-                "Choose the directory to list: ",
+                "Choose the folder to list: ",
                 [f['name'] for f in folders],
             )
             folder = folders[c]
 
-        return self.list_path_by_parent_id(folder['id'])
+        return folder
 
     def get_file_metadata(self, file_id):
         return self.drive_service.files().get(fileId=file_id).execute()
 
     def list_path_by_parent_id(self, file_id):
         response = self.drive_service.files().list(
-            q="'%s' in parents" % file_id,
-            fields='nextPageToken, files(id, name, mimeType, parents)').execute()
+            q="'%s' in parents and trashed = false" % file_id,
+            fields=(
+                'nextPageToken, files(id, name, mimeType, parents, webViewLink)'
+            ),
+        ).execute()
         return response['files']
-
 
     def upload_action(self, args):
         self.auth(args.use_credentials_cache)
-        self.upload_files(args.files)
+        self.upload_files(args.files, dest_dir=args.dest)
 
-    def upload_files(self, filepaths):
+    def upload_files(self, filepaths, dest_dir=None):
         _LOG.info("Will upload files: %s" , ", ".join(filepaths))
+        parent_id = None
+        if dest_dir is not None:
+            folder = self.get_folder_by_name(dest_dir)
+            print("Will upload file to folder: %s" % folder['name'])
+            parent_id = folder['id']
 
         for filepath in filepaths:
             if (filepath.startswith("http://") or
                 filepath.startswith("https://")):
-                _LOG.info("Will upload file %s to Google Drive", filepath)
                 basefn = os.path.basename(filepath)
                 dest = os.path.join(tempfile.tempdir, basefn)
                 _LOG.info("Download %s to %s", filepath, dest)
                 webutil.download_file(filepath, dest)
-                _LOG.info("Upload %s to Google Drive", dest)
-                self.upload_file(dest)
+                _LOG.info("Upload file: %s", dest)
+                self.upload_file(dest, parent_id=parent_id)
             else:
                 _LOG.info("Upload file: %s", filepath)
-                self.upload_file(filepath)
+                self.upload_file(filepath, parent_id=parent_id)
 
-    def upload_file(self, filepath):
+    def upload_file(self, filepath, parent_id=None):
+        if parent_id:
+            parents = [parent_id]
+        else:
+            parents = []
+
         self.ensure_mimetype_exists(filepath)
         media = MediaFileUpload(
             filepath,
         )
 
-        file_title = os.path.basename(filepath)
-        response = self.drive_service.files().insert(
+        file_name = os.path.basename(filepath)
+        response = self.drive_service.files().create(
             media_body=media,
             body={
-                'title': file_title,
+                'name': file_name,
+                'parents': parents,
             },
+            fields='id, kind, mimeType, name, webViewLink, parents',
         ).execute()
 
-        pprint.pprint(response)
+        pprint.pprint(self.add_properties_to_file_metadata(response))
 
     def download_action(self, args):
         _LOG.error("Not implemented, yet")
@@ -221,6 +244,17 @@ class App(object):
         _LOG.info("Add type text/plain for extension %s", ext)
         mimetypes.add_type('text/plain', ext, strict=True)
         assert mimetypes.guess_type(filepath)
+
+    def add_properties_to_file_metadata(self, file_metadata):
+        parents = file_metadata.get('parents')
+        if parents:
+            parents_gdrive_links = [
+                "https://drive.google.com/drive/folders/%s" % p
+                for p in parents
+            ]
+            file_metadata['parents_gdrive_links'] = parents_gdrive_links
+
+        return file_metadata
 
 
 class ResourceNotExists(Exception):
@@ -261,10 +295,22 @@ def parse_args(app_obj, cmd_args):
     # list
     #
 
-    parser_list = subparsers.add_parser("list")
+    parser_list = subparsers.add_parser(
+        "list",
+        help="List files in a folder",
+        description="""
+            List files in a folder, prompt for a choice if multiple folders
+            found.
+        """,
+    )
     parser_list.add_argument(
         "path",
         nargs="?",
+    )
+    parser_list.add_argument(
+        "--detail",
+        action="store_true",
+        help="List details for each file in the folder",
     )
     parser_list.set_defaults(func=app_obj.list_action)
 
@@ -278,10 +324,14 @@ def parse_args(app_obj, cmd_args):
         nargs="+",
         help="Local filepaths for files to be uploaded",
     )
+    parser_upload.add_argument(
+        "--dest",
+        help="Destination folder the files uploaded to",
+    )
     parser_upload.set_defaults(func=app_obj.upload_action)
 
     #
-    # downlload
+    # download
     #
 
     parser_download = subparsers.add_parser("download")
