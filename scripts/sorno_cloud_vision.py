@@ -34,8 +34,8 @@ import os
 import sys
 
 from apiclient import discovery
+import humanfriendly
 from oauth2client import client as oauthclient
-
 from sorno import loggingutil
 
 
@@ -98,8 +98,24 @@ class CloudVisionApp(object):
                 discoveryServiceUrl=api_discovery_file,
             )
 
+        getsize = os.path.getsize
+        size_limit = None
+        if self.args.size_limit:
+            size_limit = humanfriendly.parse_size(self.args.size_limit)
+            _log.info("Size limit is %s bytes", "{:,}".format(size_limit))
+
         for f in self.args.files:
             _log.info("Process photo: %s", f)
+
+            if size_limit:
+                size = getsize(f)
+                _log.info(
+                    "File size is %s, greater than the limit %s, skipped",
+                    "{:,}".format(size),
+                    "{:,}".format(size_limit),
+                )
+                continue
+
             with open(f, "rb") as image:
                 image_content = base64.b64encode(image.read())
                 if use_api_key:
@@ -205,6 +221,13 @@ def parse_args(cmd_args):
 
     parser.add_argument(
         "--api-key",
+    )
+
+    parser.add_argument(
+        "--size-limit",
+        help="Skip files which have size higher than this limit."
+        " Cloud Vision only supports up to 4MB. You can use any string that"
+        " represents a size like '4MB', '3K', '5G'.",
     )
 
     parser.add_argument(
