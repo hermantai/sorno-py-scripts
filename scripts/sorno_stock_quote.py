@@ -93,6 +93,7 @@ class StockApp(object):
         stock_symbol,
         print_fundamentals=False,
         print_history=False,
+        print_kd=False,
         print_price_quote=True,
         num_of_days_for_history=30,
         print_insider_purchases=False,
@@ -101,6 +102,7 @@ class StockApp(object):
 
         self.print_fundamentals = print_fundamentals
         self.print_history = print_history
+        self.print_kd = print_kd
         self.print_price_quote = print_price_quote
 
         self.num_of_days_for_history = num_of_days_for_history
@@ -176,8 +178,67 @@ class StockApp(object):
 
         _LOG.info("URL: %s", resp.url)
 
-        for line in resp.text.split("\n"):
-            _PLAIN_LOGGER.info(line.replace(",", "\t"))
+        if self.print_kd:
+            # The csv data came in reverse chronlogical order and with the
+            # following fields:
+            # Date Open High Low Close Volume Adj Close
+
+            # First, reverse the data so that we store it in chronological
+            # order.
+            data = []
+            first = True
+            for line in resp.text.split("\n"):
+                if line:
+                    data.append(line.split(','))
+            data.reverse()
+
+            if not data:
+                return
+
+            # Second, take out the headers
+            headers = data[-1] + ["%k", "%d"]
+            del data[-1]
+
+            all_ks = []
+            # Third, calculate the %k and %d
+            for i, row in enumerate(data):
+                if i >= 13:
+                    data_in_period = data[i - 13:i + 1]
+                    lowest = min([float(r[3]) for r in data_in_period])
+                    highest = max([float(r[2]) for r in data_in_period])
+                    current_close = float(row[4])
+                    k = int(
+                        round(
+                            (current_close - lowest) / (highest - lowest) * 100
+                        )
+                    )
+                    row.append(str(k))
+                    all_ks.append(k)
+                    if len(all_ks) >= 3:
+                        # calculate %d
+                        row.append(str(int(round(sum(all_ks[-3:]) / 3.0))))
+
+            # Finally, print out the headers data
+            _PLAIN_LOGGER.info("\t".join(headers))
+
+            data.reverse()
+            for row in data:
+                _PLAIN_LOGGER.info(self.historical_data_row_for_printing(row))
+        else:
+            for line in resp.text.split("\n"):
+                if line:
+                    linedata = line.split(',')
+                    _PLAIN_LOGGER.info(
+                        self.historical_data_row_for_printing(linedata)
+                    )
+
+    def historical_data_row_for_printing(self, row):
+        return "\t".join(
+            [
+                str(round(float(c),2)) if "." in c else c
+                for c in row
+            ]
+        )
 
     def print_insider_purchase_entries(self):
         resp = requests.get(
@@ -252,6 +313,16 @@ def parse_args(cmd_args):
         default=30,
     )
 
+    parser.add_argument(
+        "-k",
+        "--kd-line",
+        help="Print values for fast stochastic oscillators along with"
+            " historical stock quotes. This option can only be used with"
+            " --num-of-days and there are at least 14 historical stock quotes."
+            " The period used for %%k is 14, and %%d is 3-period"
+            " moving average of %%k.",
+        action="store_true",
+    )
     parser.add_argument("stock_symbol", nargs="+")
 
     args = parser.parse_args(cmd_args)
@@ -271,6 +342,7 @@ def main():
         app = StockApp(
             stock_symbol,
             print_history=args.history,
+            print_kd=args.kd_line,
             print_price_quote=not args.no_price_quote,
             print_fundamentals=args.fundamentals,
             num_of_days_for_history=args.num_of_days,
