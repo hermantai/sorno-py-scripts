@@ -244,25 +244,49 @@ class StockApp(object):
                     current_row.append(str(int(round(sum(all_ks[-3:]) / 3.0))))
                 data.append(current_row)
 
-            # Finally, print out the headers data
-            _PLAIN_LOGGER.info("\t".join(headers))
-
             # change it back to reverse chronlogical order
             data.reverse()
+
+            # Finally, format the headers and data, then print them out
+            out = []
             for row in data:
-                _PLAIN_LOGGER.info(self.historical_data_row_for_printing(row))
+                out.append(self.format_data_row(row))
+
+            consoleutil.DataPrinter(
+                out,
+                headers=headers,
+                print_func=_PLAIN_LOGGER.info
+            ).print_result()
         else:
+            out = []
+            first = True
+            headers = None
             for line in resp.text.split("\n"):
                 if line:
                     linedata = line.split(',')
-                    _PLAIN_LOGGER.info(
-                        self.historical_data_row_for_printing(linedata)
-                    )
+                    if first:
+                        headers = linedata
+                        first = False
+                        continue
+
+                    out.append(self.format_data_row(linedata))
+            consoleutil.DataPrinter(
+                out,
+                headers=headers,
+                print_func=_PLAIN_LOGGER.info
+            ).print_result()
+
+    @staticmethod
+    def format_data_row(row):
+        return [
+            "{0:.2f}".format(float(c)) if "." in c else c
+            for c in row
+        ]
 
     def historical_data_row_for_printing(self, row):
         return "\t".join(
             [
-                str(round(float(c),2)) if "." in c else c
+                "{0:.2f}".format(float(c)) if "." in c else c
                 for c in row
             ]
         )
