@@ -107,6 +107,9 @@ class StockApp(object):
 
         self.num_of_days_for_history = num_of_days_for_history
         self.print_insider_purchases = print_insider_purchases
+        self.day_low = None
+        self.day_high = None
+        self.current_quote = None
 
     def run(self):
         if self.print_price_quote:
@@ -130,6 +133,10 @@ class StockApp(object):
 
             for header in headers:
                 _PLAIN_LOGGER.info("%s:\t%s", header, d[header])
+
+            self.day_high = float(d['high'])
+            self.day_low = float(d['low'])
+            self.current_quote = float(d['price'])
 
         if self.print_fundamentals:
             resp = requests.get(
@@ -201,26 +208,46 @@ class StockApp(object):
 
             all_ks = []
             # Third, calculate the %k and %d
+            lowest = None
+            highest = None
             for i, row in enumerate(data):
                 if i >= 13:
                     data_in_period = data[i - 13:i + 1]
                     lowest = min([float(r[3]) for r in data_in_period])
                     highest = max([float(r[2]) for r in data_in_period])
                     current_close = float(row[4])
-                    k = int(
-                        round(
-                            (current_close - lowest) / (highest - lowest) * 100
-                        )
-                    )
+                    k = self.calculate_k(current_close, lowest, highest)
                     row.append(str(k))
                     all_ks.append(k)
                     if len(all_ks) >= 3:
                         # calculate %d
                         row.append(str(int(round(sum(all_ks[-3:]) / 3.0))))
 
+            # Fourth, calculate current %k and %d
+            if all_ks:
+                current_row = [
+                    "Current",
+                    "N/A",
+                    str(self.day_high),
+                    str(self.day_low),
+                    str(self.current_quote),
+                    "N/A",
+                    "N/A",
+                ]
+                lowest = min(lowest, self.day_low)
+                highest = max(highest, self.day_high)
+                k = self.calculate_k(self.current_quote, lowest, highest)
+                current_row.append(str(k))
+                all_ks.append(k)
+                if len(all_ks) >= 3:
+                    # calculate %d
+                    current_row.append(str(int(round(sum(all_ks[-3:]) / 3.0))))
+                data.append(current_row)
+
             # Finally, print out the headers data
             _PLAIN_LOGGER.info("\t".join(headers))
 
+            # change it back to reverse chronlogical order
             data.reverse()
             for row in data:
                 _PLAIN_LOGGER.info(self.historical_data_row_for_printing(row))
@@ -238,6 +265,14 @@ class StockApp(object):
                 str(round(float(c),2)) if "." in c else c
                 for c in row
             ]
+        )
+
+    @staticmethod
+    def calculate_k(current, lowest, highest):
+        return int(
+            round(
+                (current - lowest) / (highest - lowest) * 100
+            )
         )
 
     def print_insider_purchase_entries(self):
@@ -323,6 +358,7 @@ def parse_args(cmd_args):
             " moving average of %%k.",
         action="store_true",
     )
+
     parser.add_argument("stock_symbol", nargs="+")
 
     args = parser.parse_args(cmd_args)
