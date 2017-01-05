@@ -34,6 +34,7 @@ from cStringIO import StringIO
 import csv
 import datetime
 import logging
+import math
 import sys
 import subprocess
 
@@ -94,6 +95,7 @@ class StockApp(object):
         print_fundamentals=False,
         print_history=False,
         print_kd=False,
+        print_rsi=False,
         print_price_quote=True,
         num_of_days_for_history=30,
         print_insider_purchases=False,
@@ -103,6 +105,7 @@ class StockApp(object):
         self.print_fundamentals = print_fundamentals
         self.print_history = print_history
         self.print_kd = print_kd
+        self.print_rsi = print_rsi
         self.print_price_quote = print_price_quote
 
         self.num_of_days_for_history = num_of_days_for_history
@@ -154,6 +157,20 @@ class StockApp(object):
                 consoleutil.DataPrinter.PRINT_STYLE_VERBOSE
             )
 
+        if not self.print_history and self.print_kd:
+            _LOG.error(
+                "In order to print stochastic oscillators, historical data"
+                    " data has to be enabled (--history)"
+            )
+            return
+
+        if not self.print_history and self.print_rsi:
+            _LOG.error(
+                "In order to print RSI, historical data"
+                    " data has to be enabled (--history)"
+            )
+            return
+
         if self.print_history:
             _PLAIN_LOGGER.info("")
             self.print_historical_stock_quotes()
@@ -185,103 +202,137 @@ class StockApp(object):
 
         _LOG.info("URL: %s", resp.url)
 
-        if self.print_kd:
-            # The csv data came in reverse chronlogical order and with the
-            # following fields:
-            # Date Open High Low Close Volume Adj Close
+        # The csv data came in reverse chronlogical order and with the
+        # following fields:
+        # Date Open High Low Close Volume Adj-Close
+        data = []
+        headers = None
+        for line in resp.text.split("\n"):
+            if line:
+                if not headers:
+                    headers = line.split(',')
+                    continue
 
+                values = line.split(',')
+                for i in (1, 2, 3, 4, 6):
+                    values[i] = float(values[i])
+                # volume should be an integer
+                values[5] = int(values[5])
+                data.append(values)
+
+        if not data:
+            return
+
+        if self.print_kd:
             # First, reverse the data so that we store it in chronological
             # order.
-            data = []
-            first = True
-            for line in resp.text.split("\n"):
-                if line:
-                    data.append(line.split(','))
             data.reverse()
 
-            if not data:
-                return
-
-            # Second, take out the headers
-            headers = data[-1] + ["%k", "%d"]
-            del data[-1]
-
-            all_ks = []
-            # Third, calculate the %k and %d
+            # Second, calculate the %k and %d
+            # The csv data came in reverse chronlogical order and with the
+            # following fields:
+            # Date Open High Low Close Volume Adj-Close
             lowest = None
             highest = None
+            all_ks = []
             for i, row in enumerate(data):
                 if i >= 13:
                     data_in_period = data[i - 13:i + 1]
-                    lowest = min([float(r[3]) for r in data_in_period])
-                    highest = max([float(r[2]) for r in data_in_period])
-                    current_close = float(row[4])
+                    lowest = min([r[3] for r in data_in_period])
+                    highest = max([r[2] for r in data_in_period])
+                    current_close = row[4]
                     k = self.calculate_k(current_close, lowest, highest)
-                    row.append(str(k))
+                    row.append(k)
                     all_ks.append(k)
                     if len(all_ks) >= 3:
                         # calculate %d
-                        row.append(str(int(round(sum(all_ks[-3:]) / 3.0))))
+                        row.append(int(round(sum(all_ks[-3:]) / 3.0)))
 
-            # Fourth, calculate current %k and %d
+            # Third, calculate current %k and %d
             if all_ks:
                 current_row = [
                     "Current",
-                    "N/A",
-                    str(self.day_high),
-                    str(self.day_low),
-                    str(self.current_quote),
-                    "N/A",
-                    "N/A",
+                    float("nan"),
+                    self.day_high,
+                    self.day_low,
+                    self.current_quote,
+                    float("nan"),
+                    float("nan"),
                 ]
                 lowest = min(lowest, self.day_low)
                 highest = max(highest, self.day_high)
                 k = self.calculate_k(self.current_quote, lowest, highest)
-                current_row.append(str(k))
+                current_row.append(k)
                 all_ks.append(k)
                 if len(all_ks) >= 3:
                     # calculate %d
-                    current_row.append(str(int(round(sum(all_ks[-3:]) / 3.0))))
+                    current_row.append(int(round(sum(all_ks[-3:]) / 3.0)))
                 data.append(current_row)
 
             # change it back to reverse chronlogical order
             data.reverse()
 
-            # Finally, format the headers and data, then print them out
-            out = []
-            for row in data:
-                out.append(self.format_data_row(row))
+            # Finally, format the headers
+            headers.extend(["%k", "%d"])
 
-            consoleutil.DataPrinter(
-                out,
-                headers=headers,
-                print_func=_PLAIN_LOGGER.info
-            ).print_result()
-        else:
-            out = []
-            first = True
-            headers = None
-            for line in resp.text.split("\n"):
-                if line:
-                    linedata = line.split(',')
-                    if first:
-                        headers = linedata
-                        first = False
-                        continue
+        # Format the data before printing them out
+        out = [self.format_data_row(row) for row in data]
+        consoleutil.DataPrinter(
+            out,
+            headers=headers,
+            print_func=_PLAIN_LOGGER.info
+        ).print_result()
 
-                    out.append(self.format_data_row(linedata))
-            consoleutil.DataPrinter(
-                out,
-                headers=headers,
-                print_func=_PLAIN_LOGGER.info
-            ).print_result()
+        if self.print_rsi:
+            if len(data) >= 15:
+                gain = 0.0
+                loss = 0.0
+                for i in range(14):
+                    diff = data[i][3] - data[i-1][3]
+                    if diff >= 0:
+                        gain += diff
+                    else:
+                        loss += -1 * diff
+
+                rsi = 100 - 100.0 / (1 + gain / loss)
+                _PLAIN_LOGGER.info("RSI 14: {:.2f}".format(rsi))
+
+                current_diff = self.current_quote - data[0][3]
+                if current_diff >= 0:
+                    gain += current_diff
+                else:
+                    loss += -1 * current_diff
+                current_rsi = 100 - 100.0 / (1 + gain / loss)
+                _PLAIN_LOGGER.info(
+                    "RSI 15 (today is the last day): {:.2f}".format(
+                        current_rsi))
+            else:
+                _PLAIN_LOGGER.info("RSI 14: N/A (less than 14 days of data")
 
     @staticmethod
     def format_data_row(row):
-        return [
-            "{0:.2f}".format(float(c)) if "." in c else c
-            for c in row
-        ]
+        new_row = []
+        # The fields are:
+        # Date Open High Low Close Volume Adj-Close
+        # If self.print_kd is true, add two more fields: %k and %d
+        for i in range(len(row)):
+            if i == 0:
+                # Date
+                new_row.append(row[0])
+                continue
+
+            n = row[i]
+            if math.isnan(n):
+                new_row.append("N/A")
+                continue
+
+            if i in (5, 7, 8):
+                new_row.append(str(n))
+                continue
+
+            new_row.append("{0:.2f}".format(n))
+
+        return new_row
 
     def historical_data_row_for_printing(self, row):
         return "\t".join(
@@ -383,6 +434,14 @@ def parse_args(cmd_args):
         action="store_true",
     )
 
+    parser.add_argument(
+        "-r",
+        "--rsi",
+        help="Print RSI with period of 14 days. Also print the RSI that"
+            " includes today (so a total of 15 data points)",
+        action="store_true",
+    )
+
     parser.add_argument("stock_symbol", nargs="+")
 
     args = parser.parse_args(cmd_args)
@@ -403,6 +462,7 @@ def main():
             stock_symbol,
             print_history=args.history,
             print_kd=args.kd_line,
+            print_rsi=args.rsi,
             print_price_quote=not args.no_price_quote,
             print_fundamentals=args.fundamentals,
             num_of_days_for_history=args.num_of_days,
