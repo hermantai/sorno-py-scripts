@@ -229,6 +229,24 @@ class App(object):
         _LOG.error("Not implemented, yet")
         sys.exit(1)
 
+    def move_action(self, args):
+        self.auth(args.use_credentials_cache)
+        self.move_files(args.srcs, args.dest)
+
+    def move_files(self, srcs, dest):
+        srcs = [self.get_item(s) for s in srcs]
+        dest = self.get_item(dest)
+
+        for src in srcs:
+            _LOG.info("Move %s to %s", src['name'], dest['name'])
+            prev_parents = ",".join(src['parents'])
+            self.drive_service.files().update(
+                fileId=src['id'],
+                addParents=dest['id'],
+                removeParents=prev_parents,
+                fields='id, kind, mimeType, name, webViewLink, parents',
+            ).execute()
+
     def ensure_mimetype_exists(self, filepath):
         import mimetypes
         if mimetypes.guess_type(filepath)[0]:
@@ -255,6 +273,35 @@ class App(object):
             file_metadata['parents_gdrive_links'] = parents_gdrive_links
 
         return file_metadata
+
+    def get_item(self, query):
+        if query.startswith("q:"):
+            return self.get_item_by_name(query[2:])
+        else:
+            return self.get_file_metadata(query)
+
+    def get_item_by_name(self, name):
+        response = self.drive_service.files().list(
+            q="name contains '%s' and trashed = false" % name,
+            fields='nextPageToken, files(id, name, mimeType, parents)'
+        ).execute()
+
+        items = [
+            f for f in response['files']
+        ]
+        if len(items) == 0:
+            raise ResourceNotExists('Item "%s" not found' % name)
+
+        if len(items) == 1:
+            item = items[0]
+        else:
+            c = consoleutil.choose_item(
+                "Choose the folder to list: ",
+                [f['name'] for f in items],
+            )
+            item = items[c]
+
+        return item
 
 
 class ResourceNotExists(Exception):
@@ -336,6 +383,27 @@ def parse_args(app_obj, cmd_args):
 
     parser_download = subparsers.add_parser("download")
     parser_download.set_defaults(func=app_obj.download_action)
+
+    #
+    # move
+    #
+
+    parser_move = subparsers.add_parser(
+        "move",
+        help="Move files/folders to a folder"
+    )
+    parser_move.add_argument(
+        "srcs",
+        nargs="+",
+        help="ID's for items to be moved. An ID can be an item name prefixed"
+            " by q:"
+    )
+    parser_move.add_argument(
+        "dest",
+        help="ID for the items to move to. An ID can be an item name"
+            " prefixed by q:"
+    )
+    parser_move.set_defaults(func=app_obj.move_action)
 
     args = parser.parse_args(cmd_args)
     return args
