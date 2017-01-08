@@ -166,7 +166,8 @@ class App(object):
         return folder
 
     def get_file_metadata(self, file_id):
-        return self.drive_service.files().get(fileId=file_id).execute()
+        return self.drive_service.files().get(
+            fileId=file_id, fields="id,name,mimeType,parents").execute()
 
     def list_path_by_parent_id(self, file_id):
         response = self.drive_service.files().list(
