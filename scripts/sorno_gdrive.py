@@ -186,7 +186,7 @@ class App(object):
         parent_id = None
         if dest_dir is not None:
             folder = self.get_folder_by_name(dest_dir)
-            print("Will upload file to folder: %s" % folder['name'])
+            _LOG.info("Will upload file to folder: %s", folder['name'])
             parent_id = folder['id']
 
         for filepath in filepaths:
@@ -239,6 +239,8 @@ class App(object):
 
         for src in srcs:
             _LOG.info("Move %s to %s", src['name'], dest['name'])
+            _LOG.debug("Src: %s", src)
+            _LOG.debug("Dest: %s", dest)
             prev_parents = ",".join(src['parents'])
             self.drive_service.files().update(
                 fileId=src['id'],
