@@ -137,9 +137,14 @@ class StockApp(object):
             for header in headers:
                 _PLAIN_LOGGER.info("%s:\t%s", header, d[header])
 
+            self.current_quote = float(d['price'])
+
+            if d['high'] == "N/A":
+                # we are right after the trading day
+                return
+
             self.day_high = float(d['high'])
             self.day_low = float(d['low'])
-            self.current_quote = float(d['price'])
 
         if self.print_fundamentals:
             resp = requests.get(
@@ -181,13 +186,17 @@ class StockApp(object):
 
     def print_historical_stock_quotes(self):
         today = datetime.datetime.today()
-        from_date = today - datetime.timedelta(self.num_of_days_for_history)
+        num_of_days_for_history = self.num_of_days_for_history
+        if self.print_rsi:
+            # make sure we have at least 250 data points before today
+            num_of_days_for_history = max(310, self.num_of_days_for_history)
+        starting_date = today - datetime.timedelta(num_of_days_for_history)
 
         params = {
             's': self.stock_symbol,
-            'a': from_date.month - 1,
-            'b': from_date.day,
-            'c': from_date.year,
+            'a': starting_date.month - 1,
+            'b': starting_date.day,
+            'c': starting_date.year,
             'd': today.month-1,
             'e': today.day,
             'f': today.year,
@@ -223,20 +232,32 @@ class StockApp(object):
         if not data:
             return
 
-        if self.print_kd:
-            # First, reverse the data so that we store it in chronological
-            # order.
+        if self.print_kd or self.print_rsi:
+            # The csv data came in reverse chronological order, so make reverse
+            # it to calculate %k and %d chronologically.
             data.reverse()
 
-            # Second, calculate the %k and %d
-            # The csv data came in reverse chronlogical order and with the
-            # following fields:
-            # Date Open High Low Close Volume Adj-Close
-            lowest = None
-            highest = None
-            all_ks = []
-            for i, row in enumerate(data):
-                if i >= 13:
+            current_row = [
+                "Current",
+                float("nan"),
+                self.day_high,
+                self.day_low,
+                self.current_quote,
+                float("nan"),
+                float("nan"),
+            ]
+
+            if self.print_kd:
+                # The csv has the following fields:
+                # Date Open High Low Close Volume Adj-Close
+                lowest = None
+                highest = None
+                all_ks = []
+                for i, row in enumerate(data):
+                    if i < 13:
+                        row.extend([float("nan")] * 2)
+                        continue
+
                     data_in_period = data[i - 13:i + 1]
                     lowest = min([r[3] for r in data_in_period])
                     highest = max([r[2] for r in data_in_period])
@@ -247,33 +268,110 @@ class StockApp(object):
                     if len(all_ks) >= 3:
                         # calculate %d
                         row.append(int(round(sum(all_ks[-3:]) / 3.0)))
+                    else:
+                        row.append(float("nan"))
 
-            # Third, calculate current %k and %d
-            if all_ks:
-                current_row = [
-                    "Current",
-                    float("nan"),
-                    self.day_high,
-                    self.day_low,
-                    self.current_quote,
-                    float("nan"),
-                    float("nan"),
-                ]
-                lowest = min(lowest, self.day_low)
-                highest = max(highest, self.day_high)
-                k = self.calculate_k(self.current_quote, lowest, highest)
-                current_row.append(k)
-                all_ks.append(k)
-                if len(all_ks) >= 3:
-                    # calculate %d
-                    current_row.append(int(round(sum(all_ks[-3:]) / 3.0)))
-                data.append(current_row)
+                # Calculate current %k and %d
+                if all_ks and self.day_high:
+                    lowest = min(lowest, self.day_low)
+                    highest = max(highest, self.day_high)
+                    k = self.calculate_k(self.current_quote, lowest, highest)
+                    current_row.append(k)
+                    all_ks.append(k)
+                    if len(all_ks) >= 3:
+                        # calculate %d
+                        current_row.append(int(round(sum(all_ks[-3:]) / 3.0)))
+                    else:
+                        current_row(float("nan"))
+
+                headers.extend(["%k", "%d"])
+
+            if self.print_rsi:
+                # The csv has the following fields:
+                # Date Open High Low Close Volume Adj-Close
+                gain = 0.0
+                loss = 0.0
+                avg_gain = 0
+                avg_loss = 0
+                for i, row in enumerate(data):
+                    if i == 0:
+                        row.append(float("nan"))
+                        if _LOG.isEnabledFor(logging.DEBUG):
+                            row.extend([avg_gain, avg_loss])
+
+                        continue
+
+                    diff = data[i][4] - data[i-1][4]
+
+                    if i <= 14:
+                        if diff >= 0:
+                            gain += diff
+                        else:
+                            loss += -1 * diff
+
+                    if i < 14:
+                        row.append(float("nan"))
+                        if _LOG.isEnabledFor(logging.DEBUG):
+                            row.extend([gain / float(i), loss / float(i)])
+                        continue
+
+                    if i == 14:
+                        # first RS
+                        avg_gain = gain / 14.0
+                        avg_loss = loss / 14.0
+                        row.append(self.calculate_rsi(avg_gain, avg_loss))
+                        if _LOG.isEnabledFor(logging.DEBUG):
+                            row.append(avg_gain)
+                            row.append(avg_loss)
+                        continue
+
+                    # subsequent RS
+                    if diff >= 0:
+                        avg_gain = (avg_gain * 13 + diff) / 14.0
+                        avg_loss = avg_loss * 13 / 14.0
+                    else:
+                        avg_gain = avg_gain * 13 / 14.0
+                        avg_loss = (avg_loss * 13 + -1 * diff) / 14.0
+
+                    row.append(self.calculate_rsi(avg_gain, avg_loss))
+                    if _LOG.isEnabledFor(logging.DEBUG):
+                        row.append(avg_gain)
+                        row.append(avg_loss)
+
+                if self.day_high:
+                    current_diff = self.current_quote - data[-1][4]
+                    if current_diff >= 0:
+                        avg_gain = (avg_gain * 13 + current_diff) / 14.0
+                        avg_loss = avg_loss * 13 / 14.0
+                    else:
+                        avg_gain = avg_gain * 13 / 14.0
+                        avg_loss = (avg_loss * 13 + -1 * current_diff) / 14.0
+                    current_row.append(self.calculate_rsi(avg_gain, avg_loss))
+                    if _LOG.isEnabledFor(logging.DEBUG):
+                        current_row.append(avg_gain)
+                        current_row.append(avg_loss)
+
+                headers.append("RSI")
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    headers.append("avg_gain")
+                    headers.append("avg_loss")
+
+                if num_of_days_for_history > self.num_of_days_for_history:
+                    # delete unnecessary rows
+                    real_starting_date = today - datetime.timedelta(
+                        self.num_of_days_for_history
+                    )
+                    d = real_starting_date.strftime("%Y-%m-%d")
+                    for i, row in enumerate(data):
+                        if row[0] >= d:
+                            break
+
+                    if i:
+                        del data[0:i]
 
             # change it back to reverse chronlogical order
+            data.append(current_row)
             data.reverse()
-
-            # Finally, format the headers
-            headers.extend(["%k", "%d"])
 
         # Format the data before printing them out
         out = [self.format_data_row(row) for row in data]
@@ -282,32 +380,6 @@ class StockApp(object):
             headers=headers,
             print_func=_PLAIN_LOGGER.info
         ).print_result()
-
-        if self.print_rsi:
-            if len(data) >= 15:
-                gain = 0.0
-                loss = 0.0
-                for i in range(14):
-                    diff = data[i][3] - data[i-1][3]
-                    if diff >= 0:
-                        gain += diff
-                    else:
-                        loss += -1 * diff
-
-                rsi = 100 - 100.0 / (1 + gain / loss)
-                _PLAIN_LOGGER.info("RSI 14: {:.2f}".format(rsi))
-
-                current_diff = self.current_quote - data[0][3]
-                if current_diff >= 0:
-                    gain += current_diff
-                else:
-                    loss += -1 * current_diff
-                current_rsi = 100 - 100.0 / (1 + gain / loss)
-                _PLAIN_LOGGER.info(
-                    "RSI 15 (today is the last day): {:.2f}".format(
-                        current_rsi))
-            else:
-                _PLAIN_LOGGER.info("RSI 14: N/A (less than 14 days of data")
 
     @staticmethod
     def format_data_row(row):
@@ -349,6 +421,14 @@ class StockApp(object):
                 (current - lowest) / (highest - lowest) * 100
             )
         )
+
+    @staticmethod
+    def calculate_rsi(avg_gain, avg_loss):
+        if avg_loss == 0:
+            return 100
+
+        rs = avg_gain / float(avg_loss)
+        return 100 - 100.0 / (1.0 + rs)
 
     def print_insider_purchase_entries(self):
         resp = requests.get(
