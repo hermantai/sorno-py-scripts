@@ -167,7 +167,7 @@ class App(object):
 
     def get_file_metadata(self, file_id):
         return self.drive_service.files().get(
-            fileId=file_id, fields="id,name,mimeType,parents").execute()
+            fileId=file_id, fields="id,name,mimeType,parents, webViewLink").execute()
 
     def list_path_by_parent_id(self, file_id):
         response = self.drive_service.files().list(
@@ -230,6 +230,9 @@ class App(object):
         _LOG.error("Not implemented, yet")
         sys.exit(1)
 
+    def search_action(self, args):
+        self.search(args.query)
+
     def move_action(self, args):
         self.auth(args.use_credentials_cache)
         self.move_files(args.srcs, args.dest)
@@ -249,6 +252,25 @@ class App(object):
                 removeParents=prev_parents,
                 fields='id, kind, mimeType, name, webViewLink, parents',
             ).execute()
+
+    def search_action(self, args):
+        self.auth(args.use_credentials_cache)
+        self.search(args.query)
+
+    def search(self, query):
+        if not query.startswith("q:"):
+            print(self.get_file_metadata(query))
+            return
+
+        name = query[2:]
+
+        response = self.drive_service.files().list(
+            q="name contains '%s' and trashed = false" % name,
+            fields='nextPageToken, files(id, name, mimeType, parents, webViewLink)'
+        ).execute()
+
+        for f in response['files']:
+            print(f)
 
     def ensure_mimetype_exists(self, filepath):
         import mimetypes
@@ -407,6 +429,21 @@ def parse_args(app_obj, cmd_args):
             " prefixed by q:"
     )
     parser_move.set_defaults(func=app_obj.move_action)
+
+    #
+    # search
+    #
+
+    parser_search = subparsers.add_parser(
+        "search",
+        help="Search files or folders"
+    )
+    parser_search.add_argument(
+        "query",
+        help="A query can be the ID of the file/folder, or the name prefixed"
+            " by q:"
+    )
+    parser_search.set_defaults(func=app_obj.search_action)
 
     args = parser.parse_args(cmd_args)
     return args
