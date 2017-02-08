@@ -272,6 +272,10 @@ sorno_gtasks.py
 ~~~~~~~~~~~~~~~
 A script version of Google Tasks
 
+sorno_java_deps_graph.py
+~~~~~~~~~~~~~~~~~~~~~~~~
+Prints the class dependency graph given a bunch of java source files.
+
 sorno_ls.py
 ~~~~~~~~~~~
 sorno_ls.py is just like the Unix "ls" command
