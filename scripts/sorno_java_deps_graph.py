@@ -72,7 +72,12 @@ class App(object):
         m = self.create_classes_to_contents_map(self.args.path)
         g = self.extract_class_dependency_graph(m)
         indegrees = self.get_indegrees(g)
-        self.print_graph(g, indegrees)
+        if self.args.edges:
+            for n in g.nodes:
+                for _, dst in g.get_edges(n):
+                    print(n, "->", dst)
+        else:
+            self.print_graph(g, indegrees)
 
         return 0
 
@@ -129,7 +134,7 @@ class App(object):
 
     def print_edges(self, graph, node, indent=0):
         for _, dst in graph.get_edges(node):
-            print(" " * indent + "=>", dst)
+            print(" " * indent + "->", dst)
             self.print_edges(graph, dst, indent + 4)
 
 def parse_args(cmd_args):
@@ -142,6 +147,11 @@ def parse_args(cmd_args):
     parser.add_argument(
         "--debug",
         action="store_true",
+    )
+    parser.add_argument(
+        "--edges",
+        action="store_true",
+        help="Print the edges instead of the graph",
     )
     parser.add_argument(
         "path",
