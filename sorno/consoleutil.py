@@ -323,7 +323,7 @@ def parse_intervals(s):
     return intervals
 
 
-def confirm(prompt):
+def confirm(prompt, file=None):
     """Ask the console application user a yes/no question.
 
     The user is expected to enter "y" or "t" for Yes (True), and "n" or "f"
@@ -339,13 +339,22 @@ def confirm(prompt):
         bool: True if the user's response means Yes, False if the user's
             response means No.
     """
-    while True:
-        ans = six.moves.input(prompt + " [y/N/t/F] ").lower()
+    old_stdout = None
+    if file is not None:
+        old_stdout = sys.stdout
+        sys.stdout = file
 
-        if ans in ("y", "yes", "t", "true"):
-            return True
-        if ans in ("n", "no", "f", "false"):
-            return False
+    try:
+        while True:
+            ans = six.moves.input(prompt + " [y/N/t/F] ").lower()
+
+            if ans in ("y", "yes", "t", "true"):
+                return True
+            if ans in ("n", "no", "f", "false"):
+                return False
+    finally:
+        if old_stdout:
+            sys.stdout = old_stdout
 
 def choose_item(prompt, items):
     """Asks the console application user to choose an item from a list

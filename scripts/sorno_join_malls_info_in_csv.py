@@ -35,6 +35,7 @@ import string
 import sys
 
 from sorno import algo
+from sorno import consoleutil
 from sorno import loggingutil
 
 
@@ -80,11 +81,11 @@ class App(object):
                 reader = csv.DictReader(row_processor(f))
                 is_first_row_encountered = False
                 for row in reader:
-                    for_matching = self.get_mall_name_for_matching(row['Name'])
-                    mall_info = self.get_mall_info(for_matching, mall_infos)
+                    mall_name = row['Name']
+                    mall_info = self.get_mall_info(mall_name, mall_infos)
                     if not mall_info:
-                        mall_names.append(row['Name'])
-                        mall_info.append(row['Name'])
+                        mall_names.append(mall_name)
+                        mall_info.append(mall_name)
 
                     if num_of_placeholders and (
                         num_of_placeholders > len(mall_info)
@@ -130,7 +131,9 @@ class App(object):
 
         return 0
 
-    def get_mall_info(self, name_for_matching, mall_infos):
+    def get_mall_info(self, mall_name, mall_infos):
+        name_for_matching = self.get_mall_name_for_matching(mall_name)
+
         mall_info = mall_infos.get(name_for_matching)
         if mall_info is not None:
             return mall_info
@@ -138,10 +141,18 @@ class App(object):
         # use min edit distance to see if we can find a mall info
         for name in mall_infos:
             d = algo.min_edit_distance_dp(name_for_matching, name)
-            if d / len(name) < 0.1:
-                mall_info = mall_infos[name]
-                mall_infos[name_for_matching] = mall_info
-                return mall_info
+            if d / len(name) < 0.3:
+                if consoleutil.confirm(
+                    "Does name [%s] match [%s]?" % (
+                        re.sub(r"\s+", " ", mall_name),
+                        # the first field of mall_info must be a name
+                        re.sub(r"\s+", " ", mall_infos[name][0]),
+                    ),
+                    file=sys.stderr,
+                ):
+                    mall_info = mall_infos[name]
+                    mall_infos[name_for_matching] = mall_info
+                    return mall_info
 
         mall_info = []
         mall_infos[name_for_matching] = mall_info
