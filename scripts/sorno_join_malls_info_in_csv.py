@@ -135,7 +135,7 @@ class App(object):
                     del info[col]
 
     def get_mall_names_for_matching(self, name):
-        return "".join(name.split())
+        return "".join(name.split()).lower()
 
     def get_number_string_from_s(self, s):
         l = 0
