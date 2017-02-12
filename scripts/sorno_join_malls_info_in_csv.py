@@ -161,7 +161,7 @@ def row_processor(unicode_csv_data):
             r"\(\d+\)",
             "",
             line.decode('utf-8').replace("\u2019","'").encode('utf-8'),
-        )
+        ).replace("*","")
 
 def parse_args(cmd_args):
     description = __doc__.split("Copyright 2016")[0].strip()
