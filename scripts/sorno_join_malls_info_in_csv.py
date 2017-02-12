@@ -59,6 +59,10 @@ class App(object):
             key=lambda k: os.path.basename(k),
         )
         mall_names = []
+        # A map of adjusted mall names to mall_info
+        # An adjusted mall name is the value returned by
+        # self.get_mall_name_for_matching(original_mall_name)
+        # mall_info is a list of values of the mall
         mall_infos = {}
 
         is_last_file = True
@@ -76,14 +80,11 @@ class App(object):
                 reader = csv.DictReader(row_processor(f))
                 is_first_row_encountered = False
                 for row in reader:
-                    for_matching = self.get_mall_names_for_matching(row['Name'])
-                    matched = self.is_matched(for_matching, mall_infos)
-                    if matched is not None:
-                        mall_info = mall_infos[matched]
-                    else:
+                    for_matching = self.get_mall_name_for_matching(row['Name'])
+                    mall_info = self.get_mall_info(for_matching, mall_infos)
+                    if not mall_info:
                         mall_names.append(row['Name'])
-                        mall_info = [row['Name']]
-                        mall_infos[for_matching] = mall_info
+                        mall_info.append(row['Name'])
 
                     if num_of_placeholders and (
                         num_of_placeholders > len(mall_info)
@@ -118,7 +119,7 @@ class App(object):
 
         print("\t".join(headers))
         for mall_name in mall_names:
-            for_matching = self.get_mall_names_for_matching(mall_name)
+            for_matching = self.get_mall_name_for_matching(mall_name)
             mall_info = mall_infos[for_matching]
 
             print(
@@ -129,11 +130,22 @@ class App(object):
 
         return 0
 
-    def is_matched(self, word, words):
-        for w in words:
-            if algo.min_edit_distance_dp(word, w) / float(len(w)) < 0.1:
-                return w
-        return None
+    def get_mall_info(self, name_for_matching, mall_infos):
+        mall_info = mall_infos.get(name_for_matching)
+        if mall_info is not None:
+            return mall_info
+
+        # use min edit distance to see if we can find a mall info
+        for name in mall_infos:
+            d = algo.min_edit_distance_dp(name_for_matching, name)
+            if d / len(name) < 0.1:
+                mall_info = mall_infos[name]
+                mall_infos[name_for_matching] = mall_info
+                return mall_info
+
+        mall_info = []
+        mall_infos[name_for_matching] = mall_info
+        return mall_info
 
     def exclude_columns_kept_last(self, info):
         if self.args.columns_kept_last:
@@ -141,7 +153,7 @@ class App(object):
                 if col in info:
                     del info[col]
 
-    def get_mall_names_for_matching(self, name):
+    def get_mall_name_for_matching(self, name):
         return "".join(name.split()).lower()
 
     def get_number_string_from_s(self, s):
