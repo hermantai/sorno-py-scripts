@@ -34,6 +34,7 @@ import re
 import string
 import sys
 
+from sorno import algo
 from sorno import loggingutil
 
 
@@ -76,9 +77,9 @@ class App(object):
                 is_first_row_encountered = False
                 for row in reader:
                     for_matching = self.get_mall_names_for_matching(row['Name'])
-
-                    if for_matching in mall_infos:
-                        mall_info = mall_infos[for_matching]
+                    matched = self.is_matched(for_matching, mall_infos)
+                    if matched is not None:
+                        mall_info = mall_infos[matched]
                     else:
                         mall_names.append(row['Name'])
                         mall_info = [row['Name']]
@@ -127,6 +128,12 @@ class App(object):
             )
 
         return 0
+
+    def is_matched(self, word, words):
+        for w in words:
+            if algo.min_edit_distance_dp(word, w) / float(len(w)) < 0.1:
+                return w
+        return None
 
     def exclude_columns_kept_last(self, info):
         if self.args.columns_kept_last:
