@@ -276,6 +276,17 @@ sorno_java_deps_graph.py
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Prints the class dependency graph given a bunch of java source files.
 
+sorno_join_malls_info_in_csv.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Join the malls information in different csv files.
+
+The first line of each csv file should be the headers. One of the header should
+be "Name".
+
+Sample run::
+
+    sorno_join_malls_info_in_csv.py --columns-kept-last "Total Mall Store GLA" *.csv
+
 sorno_ls.py
 ~~~~~~~~~~~
 sorno_ls.py is just like the Unix "ls" command
