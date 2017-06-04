@@ -87,6 +87,7 @@ class App(object):
 
     def process_file(self, regex, sub, dirpath, filename):
         filename = stringutil.u(filename)
+        dirpath = stringutil.u(dirpath)
         m = re.match(regex, filename, re.UNICODE)
         if m:
             old = os.path.abspath(os.path.join(dirpath, filename))
