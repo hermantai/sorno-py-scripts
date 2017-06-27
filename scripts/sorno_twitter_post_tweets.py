@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Batch update twitter statuses
+"""Batch posting tweets on Twitter
 
 Before using the script, go to
 https://dev.twitter.com/oauth/overview/application-owner-access-tokens to get
@@ -9,9 +9,9 @@ Use Google Doc to edit your tweets, one line per tweet. You should not use naked
 
 Unzip the downloaded file. Then run the following command with the appropriate parameters. path_to_file should be the path to the html file you unzipped.
 
-	$ sorno_batch_twitter_update.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
+	$ sorno_twitter_post_tweets.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
 
-The script prints each tweet, and asks if you want to post the status indicated by "Status preview". Enter "y" if you want it posted, "n" otherwise.
+The script prints each tweet, and asks if you want to post the tweet indicated by "Tweet preview". Enter "y" if you want it posted, "n" otherwise.
 
 
     Copyright 2017 Heung Ming Tai
@@ -82,13 +82,13 @@ class App(object):
                 content = f.read()
 
             soup = bs4.BeautifulSoup(content, 'html.parser')
-            self.batch_update_with_soup(soup)
+            self.batch_tweeting_with_soup(soup)
 
 
         _log.debug("user %s", user)
         return 0
 
-    def batch_update_with_soup(self, soup):
+    def batch_tweeting_with_soup(self, soup):
         tweets = []
         for p in soup.find_all('p'):
             text = p.text.replace('\xa0', ' ').strip()
@@ -124,7 +124,7 @@ class App(object):
         for link in tweet.links:
             status = self.join_text(status, link)
 
-        print("Status preview:", status)
+        print("Tweet preview:", status)
 
         if consoleutil.confirm("Post the status?"):
             print("Result:", self.api.PostUpdate(status))

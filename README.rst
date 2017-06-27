@@ -141,9 +141,9 @@ Example::
     then foo
 
 
-sorno_batch_twitter_update.py
+sorno_twitter_post_tweets.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Batch update twitter statuses
+Batch posting tweets on Twitter
 
 Before using the script, go to
 https://dev.twitter.com/oauth/overview/application-owner-access-tokens to get
@@ -155,9 +155,9 @@ Unzip the downloaded file. Then run the following command with the appropriate p
 
 ::
 
-  	$ sorno_batch_twitter_update.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
+    $ sorno_twitter_post_tweets.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
 
-The script prints each tweet, and asks if you want to post the status indicated by "Status preview". Enter "y" if you want it posted, "n" otherwise.
+The script prints each tweet, and asks if you want to post the tweet indicated by "Tweet preview". Enter "y" if you want it posted, "n" otherwise.
 
 sorno_cloud_vision.py
 ~~~~~~~~~~~~~~~~~~~~~
