@@ -18,6 +18,7 @@ dependency_libs = [
     # https://github.com/ahupp/python-magic
     "python_magic",
     "python_dateutil",
+    "python_twitter",
     "requests",
     "six",
     "tzlocal",
