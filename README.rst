@@ -141,6 +141,24 @@ Example::
     then foo
 
 
+sorno_batch_twitter_update.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Batch update twitter statuses
+
+Before using the script, go to
+https://dev.twitter.com/oauth/overview/application-owner-access-tokens to get
+the necessary credentials.
+
+Use Google Doc to edit your tweets, one line per tweet. You should not use naked links (i.e. each link should be associated with some text). Then "File" -> "Download as" -> "Web Page (.html zipped)".
+
+Unzip the downloaded file. Then run the following command with the appropriate parameters. path_to_file should be the path to the html file you unzipped.
+
+::
+
+  	$ sorno_batch_twitter_update.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
+
+The script prints each tweet, and asks if you want to post the status indicated by "Status preview". Enter "y" if you want it posted, "n" otherwise.
+
 sorno_cloud_vision.py
 ~~~~~~~~~~~~~~~~~~~~~
 sorno_cloud_vision.py makes using the Google Cloud Vision API easier.
