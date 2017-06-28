@@ -86,7 +86,6 @@ class App(object):
             soup = bs4.BeautifulSoup(content, 'html.parser')
             self.batch_tweeting_with_soup(soup)
 
-
         _log.debug("user %s", user)
         return 0
 
@@ -137,8 +136,10 @@ class App(object):
 
         print("Tweet preview:", status)
 
-        if consoleutil.confirm("Post the status?"):
-            print("Result:", self.api.PostUpdate(status))
+        if consoleutil.confirm("Tweet it?"):
+            result = self.api.PostUpdate(status)
+            print("Tweeted:", result.text)
+            print("Result:", result)
 
     def join_text(self, text, more_text):
         if text == "":
