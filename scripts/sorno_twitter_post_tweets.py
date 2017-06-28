@@ -35,7 +35,9 @@ from __future__ import unicode_literals
 
 import argparse
 from collections import namedtuple
+import copy
 import logging
+import re
 import subprocess
 import sys
 import urlparse
@@ -91,16 +93,25 @@ class App(object):
     def batch_tweeting_with_soup(self, soup):
         tweets = []
         for p in soup.find_all('p'):
-            text = p.text.replace('\xa0', ' ').strip()
+            anchors = p.find_all('a')
+            links = [self.clean_link(a['href']) for a in anchors]
+            text = self.get_text(p)
             if not text:
                 continue
-            anchors = p.find_all('a')
-            tweets.append(Tweet(text=text, links=[self.clean_link(a['href']) for a in anchors]))
+            tweets.append(Tweet(text=text, links=links))
 
         for i, tweet in enumerate(tweets):
             print("Tweet %s:" % (i + 1))
             self.post_tweet(tweet)
             print("\n" * 2)
+
+    def get_text(self, node):
+        if self.args.remove_anchored_text:
+            node = copy.copy(node)
+            for anchor in node('a'):
+                anchor.replaceWith("")
+
+        return re.sub(r"\s+", " ", node.text.replace('\xa0', ' ')).strip()
 
     def clean_link(self, link):
         """
@@ -178,6 +189,10 @@ def parse_args(cmd_args):
     )
     parser.add_argument(
         "--parse-tweets-from-file",
+    )
+    parser.add_argument(
+        "--remove-anchored-text",
+        action="store_true",
     )
 
     args = parser.parse_args(cmd_args)
