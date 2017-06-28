@@ -51,7 +51,7 @@ from sorno import loggingutil
 
 _log = logging.getLogger()
 
-Tweet = namedtuple('Tweet', ['text', 'links'])
+Tweet = namedtuple('Tweet', ['text', 'links', 'original_node'])
 
 
 class App(object):
@@ -92,20 +92,24 @@ class App(object):
     def batch_tweeting_with_soup(self, soup):
         tweets = []
         for p in soup.find_all('p'):
-            anchors = p.find_all('a')
-            links = [self.clean_link(a['href']) for a in anchors]
-            text = self.get_text(p)
-            if not text:
+            tweet = self.make_tweet(p, remove_anchored_text=self.args.remove_anchored_text)
+            if not tweet.text:
                 continue
-            tweets.append(Tweet(text=text, links=links))
+            tweets.append(tweet)
 
         for i, tweet in enumerate(tweets):
             print("Tweet %s:" % (i + 1))
             self.post_tweet(tweet)
             print("\n" * 2)
 
-    def get_text(self, node):
-        if self.args.remove_anchored_text:
+    def make_tweet(self, node, remove_anchored_text=False):
+        anchors = node.find_all('a')
+        links = [self.clean_link(a['href']) for a in anchors]
+        text = self.get_text(node, remove_anchored_text=remove_anchored_text)
+        return Tweet(text=text, links=links, original_node=node)
+
+    def get_text(self, node, remove_anchored_text=False):
+        if remove_anchored_text:
             node = copy.copy(node)
             for anchor in node('a'):
                 anchor.replaceWith("")
@@ -136,10 +140,18 @@ class App(object):
 
         print("Tweet preview:", status)
 
-        if consoleutil.confirm("Tweet it?"):
+        ans = consoleutil.input("Tweet it?[yes/no/remove-anchored-text]")
+        ans = ans.lower()
+        if ans in ("y", "yes"):
             result = self.api.PostUpdate(status)
             print("Tweeted:", result.text)
             print("Result:", result)
+        elif ans in ("n", "no"):
+            return
+        elif ans in ("r", "remove", "remove-anchored-text"):
+            print("\n*Edited*\n")
+            tweet = self.make_tweet(tweet.original_node, remove_anchored_text=True)
+            self.post_tweet(tweet)
 
     def join_text(self, text, more_text):
         if text == "":
