@@ -135,12 +135,14 @@ class App(object):
         print("Text:", tweet.text)
         print("Links:", tweet.links)
         status = tweet.text
+        status_len = len(status)
         for link in tweet.links:
             status = self.join_text(status, link)
+        status_with_links_len = len(status)
 
-        print("Tweet preview:", status)
+        print("Tweet preview(%s,%s): %s" % (status_len, status_with_links_len, status))
 
-        ans = consoleutil.input("Tweet it?[yes/no/remove-anchored-text]")
+        ans = consoleutil.input("\nTweet it[yes/no/remove-anchored-text]? ")
         ans = ans.lower()
         if ans in ("y", "yes"):
             result = self.api.PostUpdate(status)
