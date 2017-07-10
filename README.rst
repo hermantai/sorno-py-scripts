@@ -140,25 +140,6 @@ Example::
     and 1455225387(2016-02-11 13:16:27)
     then foo
 
-
-sorno_twitter_post_tweets.py
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Batch posting tweets on Twitter
-
-Before using the script, go to
-https://dev.twitter.com/oauth/overview/application-owner-access-tokens to get
-the necessary credentials.
-
-Use Google Doc to edit your tweets, one line per tweet. You should not use naked links (i.e. each link should be associated with some text). Then "File" -> "Download as" -> "Web Page (.html zipped)".
-
-Unzip the downloaded file. Then run the following command with the appropriate parameters. path_to_file should be the path to the html file you unzipped.
-
-::
-
-    $ sorno_twitter_post_tweets.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
-
-The script prints each tweet, and asks if you want to post the tweet indicated by "Tweet preview". Enter "y" if you want it posted, "n" otherwise.
-
 sorno_cloud_vision.py
 ~~~~~~~~~~~~~~~~~~~~~
 sorno_cloud_vision.py makes using the Google Cloud Vision API easier.
@@ -189,6 +170,20 @@ Sends a simple email with plain text
 
 The script first tries to use your system Mail Transfer Agent(MTA) configured,
 otherwise, it prompts for login to use Gmail SMTP server.
+
+sorno_extract_spg_properties.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Extracts Simon Property Group property information from its 10-K filings
+
+Sample usage::
+
+    $ sorno_extract_spg_properties.py spg_10-k.html
+
+If you get UnicodeEncodingError, you should prefix your command with
+"PYTHONIOENCODING=UTF-8". E.g::
+
+    $ PYTHONIOENCODING=UTF-8 sorno_extract_spg_properties.py html_file
+
 
 sorno_facts.py
 ~~~~~~~~~~~~~~~~~~~~
@@ -404,6 +399,24 @@ Prints the top files in terms of sizes.
 
 Prints the top files in terms of sizes under a directory or its subdirectories
 size
+
+sorno_twitter_post_tweets.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Batch posting tweets on Twitter
+
+Before using the script, go to
+https://dev.twitter.com/oauth/overview/application-owner-access-tokens to get
+the necessary credentials.
+
+Use Google Doc to edit your tweets, one line per tweet. You should not use naked links (i.e. each link should be associated with some text). Then "File" -> "Download as" -> "Web Page (.html zipped)".
+
+Unzip the downloaded file. Then run the following command with the appropriate parameters. path_to_file should be the path to the html file you unzipped.
+
+::
+
+    $ sorno_twitter_post_tweets.py --consumer-key consumer_key --consumer-secret consumer_secret --access_token-key access_token_key --access-token-secret access_token_secret --parse-tweets-from-file path_to_file
+
+The script prints each tweet, and asks if you want to post the tweet indicated by "Tweet preview". Enter "y" if you want it posted, "n" otherwise.
 
 Using scripts involving Google App API
 ---------------------------------------
