@@ -31,6 +31,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import argparse
+import humanize
 import logging
 import os
 import pprint
@@ -278,11 +279,18 @@ class DropboxApp(object):
             results, start = self.search(dirpath, args.query, start=start)
             for r in results:
                 metadata = r.metadata
+                s = ""
                 if args.detail:
-                    _PLAIN_LOGGER.info(
-                        pprint.pformat(self.metadata_to_dict(metadata)))
-                else:
-                    _PLAIN_LOGGER.info(metadata.name)
+                    s += pprint.pformat(self.metadata_to_dict(metadata))
+                if args.print_full_path:
+                    if s:
+                        s += "\n"
+                    s += metadata.path_display
+                if not s:
+                    s = metadata.name
+                if args.print_size and not isinstance(metadata, dropbox.files.FolderMetadata):
+                    s += "\t" + humanize.naturalsize(metadata.size)
+                _PLAIN_LOGGER.info(s)
             if not start:
                 break
 
@@ -450,6 +458,16 @@ def parse_args(app_obj, cmd_args):
     parser_search.add_argument(
         "--detail",
         help="If true, the whole details of the results are printed out",
+        action="store_true",
+    )
+    parser_search.add_argument(
+        "--print-full-path",
+        help="Print the full path of the result",
+        action="store_true",
+    )
+    parser_search.add_argument(
+        "--print-size",
+        help="Print the full path of the result",
         action="store_true",
     )
     parser_search.add_argument("query")

@@ -13,6 +13,7 @@ dependency_libs = [
     "feedparser",
     "google_api_python_client",
     "humanfriendly",
+    "humanize",
     "ipython",
     "lxml",
     # https://github.com/ahupp/python-magic
@@ -31,7 +32,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="sorno-py-scripts",
-    version="0.43.2",
+    version="0.43.3",
     description="Herman Tai's python scripts all prefixed with \"sorno_\"",
     long_description=readme_text,
     author="Herman Tai",
