@@ -160,7 +160,8 @@ class DropboxApp(object):
         code = six.moves.input("Enter the authorization code here: ").strip()
 
         try:
-            access_token, user_id = flow.finish(code)
+            oauth_result = flow.finish(code)
+            access_token, user_id = oauth_result.access_token, oauth_result.user_id
             _LOG.debug("User id is %s", user_id)
         except rest.ErrorResponse, e:
             _PLAIN_LOGGER.error('Error: %s', e)
