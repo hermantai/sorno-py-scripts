@@ -318,7 +318,18 @@ class DropboxApp(object):
         if args.print_size and not args.detail and not isinstance(metadata, dropbox.files.FolderMetadata):
             s += "\t" + humanize.naturalsize(metadata.size)
         if args.output_buffer:
-            print(s)
+            # the following comes from the StreamHandler.emit method in the
+            # logging module
+            if isinstance(s, unicode):
+                try:
+                    if sys.stdout.encoding:
+                        print(s.encode(sys.stdout.encoding))
+                    else:
+                        print(s)
+                except UnicodeEncodeError:
+                    print(s.encode("utf8"))
+            else:
+                print(s)
         else:
             _PLAIN_LOGGER.info(s)
 
