@@ -105,20 +105,16 @@ class DropboxApp(object):
             dirpath = ""
         cursor = None
         while True:
-            entries, cursor = self.ls(dirpath, cursor=cursor)
+            entries, cursor = self.ls(dirpath, recursive=args.recursive, cursor=cursor)
             for entry in entries:
-                if args.detail:
-                    _PLAIN_LOGGER.info(
-                        pprint.pformat(self.metadata_to_dict(entry)))
-                else:
-                    _PLAIN_LOGGER.info(entry.name)
+                self.print_result(entry, args)
 
             if cursor is None:
                 break
 
         return 0
 
-    def ls(self, dirpath, cursor=None):
+    def ls(self, dirpath, recursive=False, cursor=None):
         """List files in current remote directory
 
         Returns:
@@ -128,7 +124,7 @@ class DropboxApp(object):
         if cursor:
             resp = self.api_client.files_list_folder_continue(cursor)
         else:
-            resp = self.api_client.files_list_folder(dirpath)
+            resp = self.api_client.files_list_folder(dirpath, recursive=recursive)
 
         _LOG.debug(resp)
 
@@ -279,18 +275,8 @@ class DropboxApp(object):
             results, start = self.search(dirpath, args.query, start=start)
             for r in results:
                 metadata = r.metadata
-                s = ""
-                if args.detail:
-                    s += pprint.pformat(self.metadata_to_dict(metadata))
-                if args.print_full_path:
-                    if s:
-                        s += "\n"
-                    s += metadata.path_display
-                if not s:
-                    s = metadata.name
-                if args.print_size and not isinstance(metadata, dropbox.files.FolderMetadata):
-                    s += "\t" + humanize.naturalsize(metadata.size)
-                _PLAIN_LOGGER.info(s)
+                self.print_result(r.metadata, args)
+
             if not start:
                 break
 
@@ -316,6 +302,20 @@ class DropboxApp(object):
 
     def metadata_to_dict(self, metadata):
         return {n: getattr(metadata, n) for n in metadata._all_field_names_}
+
+    def print_result(self, metadata, args):
+        s = ""
+        if args.detail:
+            s += pprint.pformat(self.metadata_to_dict(metadata))
+        if args.print_full_path:
+            if s:
+                s += "\n"
+            s += metadata.path_display
+        if not s:
+            s = metadata.name
+        if args.print_size and not args.detail and not isinstance(metadata, dropbox.files.FolderMetadata):
+            s += "\t" + humanize.naturalsize(metadata.size)
+        _PLAIN_LOGGER.info(s)
 
 
 def parse_args(app_obj, cmd_args):
@@ -352,6 +352,21 @@ def parse_args(app_obj, cmd_args):
     parser_ls.add_argument(
         "--detail",
         help="If true, the whole details of the results are printed out",
+        action="store_true",
+    )
+    parser_ls.add_argument(
+        "--recursive",
+        help="If true, recursively list all content",
+        action="store_true",
+    )
+    parser_ls.add_argument(
+        "--print-full-path",
+        help="If true, print the full path of each content",
+        action="store_true",
+    )
+    parser_ls.add_argument(
+        "--print-size",
+        help="Print the full path of the result",
         action="store_true",
     )
     parser_ls.set_defaults(func=app_obj.do_ls)
