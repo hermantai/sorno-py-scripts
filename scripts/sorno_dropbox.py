@@ -107,6 +107,8 @@ class DropboxApp(object):
         while True:
             entries, cursor = self.ls(dirpath, recursive=args.recursive, cursor=cursor)
             for entry in entries:
+                if isinstance(entry, dropbox.files.DeletedMetadata):
+                    continue
                 self.print_result(entry, args)
 
             if cursor is None:
@@ -315,7 +317,7 @@ class DropboxApp(object):
             s += metadata.path_display
         if not s:
             s = metadata.name
-        if args.print_size and not args.detail and not isinstance(metadata, dropbox.files.FolderMetadata):
+        if args.print_size and not args.detail and isinstance(metadata, dropbox.files.FileMetadata):
             s += "\t" + humanize.naturalsize(metadata.size)
         if args.output_buffer:
             # the following comes from the StreamHandler.emit method in the
