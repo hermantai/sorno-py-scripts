@@ -130,6 +130,8 @@ class DropboxApp(object):
 
         if resp.has_more:
             cursor = resp.cursor
+        else:
+            cursor = None
 
         return resp.entries, cursor
 

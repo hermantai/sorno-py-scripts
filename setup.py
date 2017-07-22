@@ -32,7 +32,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="sorno-py-scripts",
-    version="0.43.4",
+    version="0.43.5",
     description="Herman Tai's python scripts all prefixed with \"sorno_\"",
     long_description=readme_text,
     author="Herman Tai",
