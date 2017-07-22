@@ -315,7 +315,10 @@ class DropboxApp(object):
             s = metadata.name
         if args.print_size and not args.detail and not isinstance(metadata, dropbox.files.FolderMetadata):
             s += "\t" + humanize.naturalsize(metadata.size)
-        _PLAIN_LOGGER.info(s)
+        if args.output_buffer:
+            print(s)
+        else:
+            _PLAIN_LOGGER.info(s)
 
 
 def parse_args(app_obj, cmd_args):
@@ -368,6 +371,12 @@ def parse_args(app_obj, cmd_args):
         "--print-size",
         help="Print the full path of the result",
         action="store_true",
+    )
+    parser_ls.add_argument(
+        "--buffer",
+        help="Buffer the output",
+        action="store_true",
+        dest="output_buffer",
     )
     parser_ls.set_defaults(func=app_obj.do_ls)
 
