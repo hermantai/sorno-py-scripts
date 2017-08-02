@@ -304,6 +304,10 @@ sorno_ls.py
 ~~~~~~~~~~~
 sorno_ls.py is just like the Unix "ls" command
 
+sorno_merge_pdfs.py
+~~~~~~~~~~~~~~~~~~~
+Merge pdfs
+
 sorno_pick.py
 ~~~~~~~~~~~~~
 A script to prompt for choosing items generated from different sources, then

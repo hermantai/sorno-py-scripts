@@ -16,6 +16,7 @@ dependency_libs = [
     "humanize",
     "ipython",
     "lxml",
+    "pypdf",
     # https://github.com/ahupp/python-magic
     "python_magic",
     "python_dateutil",
@@ -32,7 +33,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="sorno-py-scripts",
-    version="0.43.7",
+    version="0.44.1",
     description="Herman Tai's python scripts all prefixed with \"sorno_\"",
     long_description=readme_text,
     author="Herman Tai",
