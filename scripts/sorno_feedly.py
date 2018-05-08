@@ -48,6 +48,7 @@ import argparse
 import logging
 import json
 import os
+import pprint
 import sys
 
 import requests
@@ -106,10 +107,20 @@ class FeedlyApp(object):
     def get_categories(self):
         endpoint = self._get_endpoint("/categories")
         headers = self._get_headers()
-        resp = requests.get(endpoint, headers=headers)
-        _log.debug("Response: %s", resp.__dict__)
+        resp = self.make_request(endpoint, headers)
+        if not resp:
+            return []
 
         return json.loads(resp.text)
+
+    def make_request(self, endpoint, headers):
+        resp = requests.get(endpoint, headers=headers)
+        _log.debug("Response: %s", pprint.pformat(resp.__dict__))
+        if resp.status_code != 200:
+            pprint.pprint(resp.__dict__)
+            return None
+
+        return resp
 
     def feeds_action(self, args):
         self.feeds()
@@ -136,10 +147,15 @@ class FeedlyApp(object):
             print("")
 
     def entries_action(self, args):
-        self.entries(do_cleanup=args.do_cleanup)
+        self.entries(
+            do_cleanup=args.do_cleanup,
+            category_filter=args.category,
+            source_filter=args.source,
+            mark_read_after=args.mark_read_after,
+        )
         return 0
 
-    def entries(self, do_cleanup=False):
+    def entries(self, do_cleanup=False, category_filter=None, source_filter=None, mark_read_after=None):
         """Prints out all the entries for all the feeds"""
         _log.debug("Get all the category ids first")
         categories = self.get_categories()
@@ -150,6 +166,9 @@ class FeedlyApp(object):
 
         endpoint = self._get_endpoint("/streams/contents")
         for category in categories:
+            if category_filter is not None and category['id'].split('/')[-1] != category_filter:
+                continue
+
             headers = self._get_headers()
             params = {
                 'streamId': category['id'],
@@ -177,13 +196,30 @@ class FeedlyApp(object):
             )
             print("Updated:", updated.strftime("%Y/%m/%d %H:%M"))
             print("Id:", content['id'])
+
+            entries_to_be_marked = []
+
             if 'items' in content:
-                num_entries = len(content['items'])
+                items = content['items']
+                if source_filter is not None:
+                    items = [item for item in items if source_filter == self._get_null_safe(item, 'origin', 'title')]
+
+                num_entries = len(items)
                 total_num_entries += num_entries
-                for i, entry in enumerate(content['items']):
+                for i, entry in enumerate(items):
                     print(" " * 4 + "(%d/%d)" % (i + 1, num_entries))
                     self._print_entry(entry, indent=" " * 4)
                     print("")
+
+                    if mark_read_after:
+                        updated = datetimeutil.timestamp_to_local_datetime(
+                            entry['updated'] / 1000
+                        )
+                        updated_in_str = updated.strftime("%Y/%m/%d %H:%M")
+                        if updated_in_str > mark_read_after:
+                            entries_to_be_marked.append(entry)
+                            continue
+
 
                     if entry['fingerprint'] in seen_fingerprints:
                         duplicated_entries.append(entry)
@@ -192,11 +228,19 @@ class FeedlyApp(object):
 
         print("\nTotal of %d entries\n" % total_num_entries)
 
+        print("Entries to be marked as read:")
+        self.handle_mark_entries_as_read(entries_to_be_marked, do_cleanup=do_cleanup)
+        if entries_to_be_marked:
+            print("")
+
         print("Duplicated entries:")
-        num_entries = len(duplicated_entries)
-        for i, duplicated_entry in enumerate(duplicated_entries):
+        self.handle_mark_entries_as_read(duplicated_entries, do_cleanup=do_cleanup)
+
+    def handle_mark_entries_as_read(self, entries, do_cleanup=False):
+        num_entries = len(entries)
+        for i, entry in enumerate(entries):
             print(" " * 4 + "(%d/%d)" % (i + 1, num_entries))
-            self._print_entry(duplicated_entry, indent=" " * 4)
+            self._print_entry(entry, indent=" " * 4)
             print("")
 
         if num_entries == 0:
@@ -206,7 +250,7 @@ class FeedlyApp(object):
                 "Mark %d duplicated entries as read?" % num_entries)
             if ans:
                 resp = self.mark_entries_as_read(
-                    [entry['id'] for entry in duplicated_entries]
+                    [entry['id'] for entry in entries]
                 )
 
                 if resp.status_code == 200:
@@ -343,6 +387,18 @@ def parse_args(app_obj, cmd_args):
         "entries",
         help="Print out all entries for each category",
         description="Print out all entries for each category",
+    )
+    parser_entries.add_argument(
+        "--category",
+        help="If specified, only the entries in this categories are printed and handled",
+    )
+    parser_entries.add_argument(
+        "--source",
+        help="If specified, only the entries from this source are printed and handled",
+    )
+    parser_entries.add_argument(
+        "--mark-read-after",
+        help="A datetime in %Y/%m/%d %H:%M format, the latest date that we keep the entries instead of being marked as read"
     )
     parser_entries.add_argument(
         "--skip-cleanup",
