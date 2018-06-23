@@ -85,36 +85,36 @@ class DownloadAllApp(object):
 
         num_links = len(elements_links)
         for i, (element, link) in enumerate(elements_links):
-            if self.regex.search(link):
-                _LOG.info(
-                    "(%s/%s) %s (%s)",
-                    i + 1,
-                    num_links,
-                    element.text,
-                    link,
-                )
-                new_filepath = os.path.join(
-                    self.out_dir,
-                    webutil.unquote_url(os.path.basename(link)),
-                )
+            _LOG.info(
+                "(%s/%s) %s (%s)",
+                i + 1,
+                num_links,
+                element.text,
+                link,
+            )
+            new_filepath = os.path.join(
+                self.out_dir,
+                webutil.unquote_url(os.path.basename(link)),
+            )
 
-                if os.path.exists(new_filepath):
-                    _LOG.info(
-                        "Skip [%s] since [%s] already exists",
-                        link,
-                        new_filepath,
-                    )
-                    continue
-                _LOG.info("Download to [%s]", new_filepath)
-                if not self.dry_run:
-                    tmp_filepath = new_filepath + ".tmp"
-                    webutil.download_file(link, tmp_filepath)
-                    os.rename(tmp_filepath, new_filepath)
+            if os.path.exists(new_filepath):
+                _LOG.info(
+                    "Skip [%s] since [%s] already exists",
+                    link,
+                    new_filepath,
+                )
+                continue
+            _LOG.info("Download to [%s]", new_filepath)
+            if not self.dry_run:
+                tmp_filepath = new_filepath + ".tmp"
+                webutil.download_file(link, tmp_filepath)
+                os.rename(tmp_filepath, new_filepath)
 
 
 def parse_args(cmd_args):
     description = """
-        Downloads all items from all links from a URL.
+        Downloads all items from all links from a URL. Use --dry-run for
+        seeing the files to be downloaded without downloading them.
     """
     parser = argparse.ArgumentParser(
         description=description,
