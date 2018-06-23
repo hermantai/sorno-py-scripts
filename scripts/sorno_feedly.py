@@ -163,6 +163,7 @@ class FeedlyApp(object):
         duplicated_entries = []
         seen_fingerprints = set()
         total_num_entries = 0
+        entries_to_be_marked = []
 
         endpoint = self._get_endpoint("/streams/contents")
         for category in categories:
@@ -194,10 +195,8 @@ class FeedlyApp(object):
             updated = datetimeutil.timestamp_to_local_datetime(
                 content['updated'] / 1000
             )
-            print("Updated:", updated.strftime("%Y/%m/%d %H:%M"))
+            print("Updated:", updated.strftime("%Y-%m-%d %H:%M"))
             print("Id:", content['id'])
-
-            entries_to_be_marked = []
 
             if 'items' in content:
                 items = content['items']
@@ -215,7 +214,7 @@ class FeedlyApp(object):
                         updated = datetimeutil.timestamp_to_local_datetime(
                             entry['updated'] / 1000
                         )
-                        updated_in_str = updated.strftime("%Y/%m/%d %H:%M")
+                        updated_in_str = updated.strftime("%Y-%m-%d %H:%M")
                         if updated_in_str > mark_read_after:
                             entries_to_be_marked.append(entry)
                             continue
@@ -229,14 +228,15 @@ class FeedlyApp(object):
         print("\nTotal of %d entries\n" % total_num_entries)
 
         print("Entries to be marked as read:")
-        self.handle_mark_entries_as_read(entries_to_be_marked, do_cleanup=do_cleanup)
+        self.handle_mark_entries_as_read(
+            entries_to_be_marked, prompt_string='Mark %d entries as read?', do_cleanup=do_cleanup)
         if entries_to_be_marked:
             print("")
 
         print("Duplicated entries:")
         self.handle_mark_entries_as_read(duplicated_entries, do_cleanup=do_cleanup)
 
-    def handle_mark_entries_as_read(self, entries, do_cleanup=False):
+    def handle_mark_entries_as_read(self, entries, prompt_string=None, do_cleanup=False):
         num_entries = len(entries)
         for i, entry in enumerate(entries):
             print(" " * 4 + "(%d/%d)" % (i + 1, num_entries))
@@ -246,8 +246,10 @@ class FeedlyApp(object):
         if num_entries == 0:
             print("None")
         elif do_cleanup:
+            if prompt_string is None:
+                prompt_string = "Mark %d duplicated entries as read?"
             ans = consoleutil.confirm(
-                "Mark %d duplicated entries as read?" % num_entries)
+                 prompt_string % num_entries)
             if ans:
                 resp = self.mark_entries_as_read(
                     [entry['id'] for entry in entries]
@@ -281,21 +283,21 @@ class FeedlyApp(object):
         )
         print(
             indent + "Updated:",
-            updated.strftime("%Y/%m/%d %H:%M"),
+            updated.strftime("%Y-%m-%d %H:%M"),
         )
         published = datetimeutil.timestamp_to_local_datetime(
             entry['published'] / 1000
         )
         print(
             indent + "Published:",
-            published.strftime("%Y/%m/%d %H:%M"),
+            published.strftime("%Y-%m-%d %H:%M"),
         )
         crawled = datetimeutil.timestamp_to_local_datetime(
             entry['crawled'] / 1000
         )
         print(
             indent + "Crawled:",
-            crawled.strftime("%Y/%m/%d %H:%M"),
+            crawled.strftime("%Y-%m-%d %H:%M"),
         )
         origin = self._get_null_safe(entry, 'origin', 'title')
         if origin:
@@ -398,7 +400,7 @@ def parse_args(app_obj, cmd_args):
     )
     parser_entries.add_argument(
         "--mark-read-after",
-        help="A datetime in %Y/%m/%d %H:%M format, the latest date that we keep the entries instead of being marked as read"
+        help="A datetime in %%Y-%%m-%%d %%H:%%M format, the latest date that we keep the entries instead of being marked as read"
     )
     parser_entries.add_argument(
         "--skip-cleanup",
