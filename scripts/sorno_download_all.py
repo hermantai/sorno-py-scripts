@@ -62,12 +62,14 @@ class DownloadAllApp(object):
         url,
         regex,
         out_dir,
+        formatted_filename="{link}",
         dry_run=False,
         raw_output=False,
     ):
         self.url = url
         self.regex = re.compile(regex)
         self.out_dir = out_dir
+        self.formatted_filename = formatted_filename
         self.dry_run = dry_run
         self.raw_output = raw_output
         self.queue = None
@@ -105,9 +107,13 @@ class DownloadAllApp(object):
                 element.text,
                 link,
             )
+            d = {
+                'link': webutil.unquote_url(os.path.basename(link)),
+                'text': element.text,
+            }
             new_filepath = os.path.join(
                 self.out_dir,
-                webutil.unquote_url(os.path.basename(link)),
+                self.formatted_filename.format(**d),
             )
 
             if os.path.exists(new_filepath):
@@ -160,6 +166,14 @@ def parse_args(cmd_args):
             "Link, output filename"),
     )
     parser.add_argument(
+        "--formatted-filename",
+        default="{link}",
+        help=(
+            "Use a formatted filename to save the downloaded file. Available"
+            " keywords are: link, text. Default: '{link}'"
+        ),
+    )
+    parser.add_argument(
         "--regex",
         default=".*",
         help="Only download links with matched regex",
@@ -182,6 +196,7 @@ def main():
         args.url,
         args.regex,
         args.out_dir,
+        formatted_filename=args.formatted_filename,
         dry_run=args.dry_run,
         raw_output=args.raw_output,
     )
