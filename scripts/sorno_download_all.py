@@ -37,16 +37,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+
 import argparse
 import logging
 import os
 import re
 import sys
 
+from Queue import Queue
 from lxml import html
 import requests
-from sorno import webutil
+from sorno import consoleutil
 from sorno import loggingutil
+from sorno import webutil
 
 
 _LOG = logging.getLogger(__name__)
@@ -60,13 +63,23 @@ class DownloadAllApp(object):
         regex,
         out_dir,
         dry_run=False,
+        raw_output=False,
     ):
         self.url = url
         self.regex = re.compile(regex)
         self.out_dir = out_dir
         self.dry_run = dry_run
+        self.raw_output = raw_output
+        self.queue = None
+        if self.raw_output:
+            self.queue = Queue()
 
     def run(self):
+        raw_output = self.raw_output
+
+        if raw_output:
+            consoleutil.DataPrinter(self.queue, streaming=True).print_result(style=consoleutil.DataPrinter.PRINT_STYLE_STREAMING_PLAIN)
+
         _LOG.info("Fetch links from url: %s", self.url)
         header = {
             # most common user-agent
@@ -105,10 +118,16 @@ class DownloadAllApp(object):
                 )
                 continue
             _LOG.info("Download to [%s]", new_filepath)
+            if raw_output:
+                row = [link, new_filepath]
+                self.queue.put(row)
             if not self.dry_run:
                 tmp_filepath = new_filepath + ".tmp"
                 webutil.download_file(link, tmp_filepath)
                 os.rename(tmp_filepath, new_filepath)
+
+        if raw_output:
+            self.queue.put(None)
 
 
 def parse_args(cmd_args):
@@ -134,6 +153,13 @@ def parse_args(cmd_args):
         default=".",
     )
     parser.add_argument(
+        "--raw-output",
+        action="store_true",
+        help=(
+            "Print raw data for the downloads. The headers are: "
+            "Link, output filename"),
+    )
+    parser.add_argument(
         "--regex",
         default=".*",
         help="Only download links with matched regex",
@@ -157,6 +183,7 @@ def main():
         args.regex,
         args.out_dir,
         dry_run=args.dry_run,
+        raw_output=args.raw_output,
     )
     app.run()
 

@@ -24,6 +24,7 @@ import sys
 
 import six
 
+import threading
 from sorno import mathlib
 
 
@@ -55,6 +56,7 @@ class DataPrinter(object):
     NICETABLE_COL_LEN = 80
     PRINT_STYLE_R = 'R'
     PRINT_STYLE_NICETABLE = 'nicetable'
+    PRINT_STYLE_STREAMING_PLAIN = 'streaming-plan'
 
     OPTION_TITLE = 'title'
     OPTION_ADDITIONAL_TRAILING_CONTENT = 'additional-trailing-content'
@@ -67,6 +69,7 @@ class DataPrinter(object):
         delimiter='\t',
         max_col_len=NICETABLE_COL_LEN,
         print_func=print,
+        streaming=False,
     ):
         """Constructs a DataPrinter object
 
@@ -78,6 +81,9 @@ class DataPrinter(object):
               column of the row. Each value should be a string properly
               formatted, since DataPrinter does not do any special formatting
               of each value.
+
+              If streaming is True, data should be a Queue with
+              the sentinel value None.
 
           headers: Optionally supply a list of headers in strings to control
               what columns are printed out and what order are the columns
@@ -97,21 +103,27 @@ class DataPrinter(object):
           print_func: A function that takes a string as an argument. The
               function is used for printing the data. By default it uses the
               built-in print function.
-        """
-        if not hasattr(data, "__getitem__"):
-            data = list(data)
 
-        if not headers and data and isinstance(data[0], dict):
-            # infer headers from data
-            headers = sorted(data[0].keys())
+          streaming: The data will come as a stream. This should
+              be used if PRINT_STYLE_STREAMING_PLAIN is used for
+              printing result.
+        """
+        if streaming:
+            self.data = iter(data.get, None)
+        else:
+            if not hasattr(data, "__getitem__"):
+                data = list(data)
+
+            if not headers and data and isinstance(data[0], dict):
+                # infer headers from data
+                headers = sorted(data[0].keys())
+
+            if data and isinstance(data[0], dict):
+                self.data = self._convert_list_of_dicts(headers, data)
+            else:
+                self.data = data
 
         self.headers = headers
-
-        if data and isinstance(data[0], dict):
-            self.data = self._convert_list_of_dicts(headers, data)
-        else:
-            self.data = data
-
         self.header_types = header_types
         self.delimiter = delimiter
         self.max_col_len = max_col_len
@@ -139,6 +151,8 @@ class DataPrinter(object):
             self.print_data()
         elif style == DataPrinter.PRINT_STYLE_PLAIN:
             self.print_data()
+        elif style == DataPrinter.PRINT_STYLE_STREAMING_PLAIN:
+            self.print_data_streaming()
         elif style == DataPrinter.PRINT_STYLE_VERBOSE:
             self.print_verbose()
         elif style == DataPrinter.PRINT_STYLE_HTML_TABLE:
@@ -147,6 +161,9 @@ class DataPrinter(object):
             self.print_table(is_nicetable=True)
         else:
             self.print_table()
+
+    def print_data_streaming(self):
+        threading.Thread(target=self.print_data).start()
 
     def print_data(self):
         # Each value is a row with ^A as delimiter
