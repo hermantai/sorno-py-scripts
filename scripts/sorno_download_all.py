@@ -107,9 +107,14 @@ class DownloadAllApp(object):
                 element.text,
                 link,
             )
+
+            if not element.text or not element.text.strip():
+                _LOG.info("Skip since text of the link is empty")
+                continue
+
             d = {
                 'link': webutil.unquote_url(os.path.basename(link)),
-                'text': element.text,
+                'text': element.text.strip(),
             }
             new_filepath = os.path.join(
                 self.out_dir,
