@@ -33,7 +33,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="sorno-py-scripts",
-    version="0.45.3",
+    version="0.46.0",
     description="Herman Tai's python scripts all prefixed with \"sorno_\"",
     long_description=readme_text,
     author="Herman Tai",
@@ -42,6 +42,9 @@ setup(
     url="https://github.com/hermantai/sorno-py-scripts",
     download_url="https://github.com/hermantai/sorno-py-scripts/archive/master.zip",
     packages=[
+        "sorno",
+    ],
+    py_modules=[
         "sorno",
     ],
     scripts=[

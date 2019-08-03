@@ -47,6 +47,32 @@ def input(prompt, file=None):
             sys.stdout = old_stdout
 
 
+def pick_items(items):
+    for i, item in enumerate(items, 1):
+        print("%d)" % i, item, file=sys.stderr)
+
+    reply = input("Please choose:", file=sys.stderr)
+
+    num_strs = [s.strip() for s in reply.split(',')]
+    nums = []
+    for s in num_strs:
+        nums.extend(num_str_to_nums(s))
+
+    chosens = [items[num - 1] for num in nums]
+    return chosens
+
+
+def num_str_to_nums(num_str):
+    if num_str:
+        if '-' in num_str:
+            start, end = num_str.split('-')
+            return list(range(int(start), int(end) + 1))
+        else:
+            return [int(num_str)]
+    else:
+        return []
+
+
 class DataPrinter(object):
     PRINT_STYLE_HTML_TABLE = 'html'
     PRINT_STYLE_PLAIN = 'plain'
