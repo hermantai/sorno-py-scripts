@@ -41,6 +41,7 @@ from __future__ import unicode_literals
 import argparse
 import logging
 import os
+from os.path import splitext
 import re
 import sys
 
@@ -109,13 +110,19 @@ class DownloadAllApp(object):
                 link,
             )
 
-            if not element.text or not element.text.strip():
+            filename = webutil.unquote_url(os.path.basename(link))
+            if element.text and element.text.strip():
+                text = element.text.strip()
+            else:
+                text = os.path.splitext(filename)[0]
+
+            if not text:
                 _LOG.info("Skip since text of the link is empty")
                 continue
 
             d = {
-                'link': webutil.unquote_url(os.path.basename(link)),
-                'text': element.text.strip(),
+                'link': filename,
+                'text': text,
             }
             new_filepath = os.path.join(
                 self.out_dir,
