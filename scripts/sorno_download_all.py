@@ -44,9 +44,10 @@ import os
 import re
 import sys
 
-from Queue import Queue
 from lxml import html
 import requests
+from six.moves.queue import Queue
+
 from sorno import consoleutil
 from sorno import loggingutil
 from sorno import webutil

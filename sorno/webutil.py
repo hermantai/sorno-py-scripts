@@ -21,11 +21,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import requests
-import urllib
+from six.moves import urllib
 
 
 def unquote_url(url):
-    return urllib.unquote(url).decode('utf8')
+    return urllib.parse.unquote(url)
 
 
 def download_file(url, local_filename):

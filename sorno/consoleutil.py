@@ -53,10 +53,11 @@ def pick_items(items):
 
     reply = input("Please choose:", file=sys.stderr)
 
-    num_strs = [s.strip() for s in reply.split(',')]
+    intervals = parse_intervals(reply)
+
     nums = []
-    for s in num_strs:
-        nums.extend(num_str_to_nums(s))
+    for interval in intervals:
+        nums.extend(range(interval.start, interval.end + 1))
 
     chosens = [items[num - 1] for num in nums]
     return chosens
