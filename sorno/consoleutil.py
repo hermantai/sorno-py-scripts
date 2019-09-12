@@ -436,6 +436,26 @@ def choose_item(prompt, items):
             print("Choose items between 1 to %d", len(items))
 
 
+class Capturing(list):
+    """
+    Captures the standard out in a context, so you can do something like:
+
+    with Capturing() as output:
+        subprocess.check_call("echo blah", shell=True)
+
+    print(str(output).contains("blah")) # true
+    """
+
+    def __enter__(self):
+      self._stdout = sys.stdout
+      sys.stdout = self._stringio = StringIO()
+      return self
+
+    def __exit__(self, *args):
+      self.extend(self._stringio.getvalue().splitlines())
+      sys.stdout = self._stdout
+
+
 if __name__ == "__main__":
     rows = [
         {'a': "apple", 'b': "boy"},
