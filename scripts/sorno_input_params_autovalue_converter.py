@@ -222,7 +222,7 @@ def replace_content_for_call_site_file(func_name, params, content):
 
 
 def replace_test_input_args_with_autovalue_class(input_args_str, params):
-  input_arg_strs = input_args_str.split(',')
+  input_arg_strs = parse_input_arg_strs(input_args_str)
   output = AUTO_VALUE_CLASS_NAME + ".builder()"
   cleaned_arg_strs = [clean_input_arg(s) for s in input_arg_strs]
 
@@ -235,7 +235,7 @@ def replace_test_input_args_with_autovalue_class(input_args_str, params):
 
 
 def replace_input_args_with_autovalue_class(input_args_str, params):
-  input_arg_strs = input_args_str.split(',')
+  input_arg_strs = parse_input_arg_strs(input_args_str)
   output = AUTO_VALUE_CLASS_NAME + ".builder()"
   cleaned_arg_strs = [clean_input_arg(s) for s in input_arg_strs]
 
@@ -243,6 +243,28 @@ def replace_input_args_with_autovalue_class(input_args_str, params):
     output += "\n.set%s(%s)" % (upperfirst(param.name), arg)
   output += "\n.build()"
   return output
+
+
+def parse_input_arg_strs(s):
+  input_arg_strs = []
+  sofar = []
+  num_open_parens = 0
+  for c in s:
+    if c == ',' and not num_open_parens:
+      input_arg_strs.append(''.join(sofar))
+      sofar.clear()
+      continue
+
+    sofar.append(c)
+    if c == '(':
+      num_open_parens += 1
+    if c == ')':
+      num_open_parens -= 1
+
+  if sofar:
+    input_arg_strs.append(''.join(sofar))
+
+  return input_arg_strs
 
 
 def clean_input_arg(s):
