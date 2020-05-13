@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""A script that converts the mulitple inputs of a function to a single
-Autovalue class.
+"""A script that converts mulitple inputs of a function to a single
+Autovalue params class.
 
 For the usages below, assume we have a class called MyConverter and the
 following files:
 
-# sample_function_defs.txt
+# sample_function_defs.txt (you don't need the full body if you don't use
+# --transform_func_def_with_autovalue option)
 
   String convertFunc(boolean f1, Optional<String> f2, Optional<Integer> f3, boolean f4) {
     print(f1);
@@ -14,6 +15,10 @@ following files:
     print(f4);
     return "nothing";
   }
+
+# sample_function_defs_without_body.txt
+
+  String convertFunc(boolean f1, Optional<String> f2, Optional<Integer> f3, boolean f4) {
 
 # sample_convert_method_calls_in_test_file.txt (this can be the whole test file)
 
