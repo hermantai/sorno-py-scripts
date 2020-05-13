@@ -45,22 +45,22 @@ import com.google.auto.value.AutoValue;
 
 /** Input parameters for {func_name}. */
 @AutoValue
-public abstract static class Params {{
+public abstract static class {autovalue_class_name} {{
   {get_methods_defs}
 
   public static Builder builder() {{
       // TODO
-      return new AutoValue_Params.Builder(){build_default_calls};
+      return new AutoValue_{autovalue_class_name}.Builder(){build_default_calls};
   }}
 
   abstract Builder toBuilder();
 
-  /** Builder for {{@link Params}} */
+  /** Builder for {{@link {autovalue_class_name}}} */
   @AutoValue.Builder
   public abstract static class Builder {{
     {set_methods_defs}
 
-    public abstract Params build();
+    public abstract {autovalue_class_name} build();
   }}
 }}
 """
@@ -77,17 +77,20 @@ class App(object):
       params = get_params(func_def_str)
 
       if self.args.output_autovalue_class:
-        print_autovalue_class(func_name, params)
+        print_autovalue_class(self.get_autovalue_class_name(), func_name, params)
 
       if self.args.convert_method_calls_in_test_file:
         content = open(self.args.convert_method_calls_in_test_file).read()
-        print(replace_content_for_test_file(func_name, params, content))
+        print(replace_content_for_test_file(self.get_autovalue_class_name(), func_name, params, content))
 
       if self.args.convert_call_site_file:
         content = open(self.args.convert_call_site_file).read()
-        print(replace_content_for_call_site_file(func_name, params, content))
+        print(replace_content_for_call_site_file(self.get_autovalue_class_name(), func_name, params, content))
 
       return 0
+
+    def get_autovalue_class_name(self):
+      return self.args.autovalue_class_name
 
 
 def get_func_name(s):
@@ -139,7 +142,7 @@ def get_until_close_paren(s):
   return s
 
 
-def print_autovalue_class(func_name, params):
+def print_autovalue_class(autovalue_class_name, func_name, params):
   get_methods_defs_strs = []
   set_methods_defs_strs = []
   build_default_calls_strs = []
@@ -168,6 +171,7 @@ def print_autovalue_class(func_name, params):
   build_default_calls = ''.join(['\n    ' + s for s in build_default_calls_strs])
 
   print(AUTO_VALUE_CLASS_TEMPLATE.format(
+      autovalue_class_name=autovalue_class_name,
       func_name=func_name,
       get_methods_defs=get_methods_defs,
       set_methods_defs=set_methods_defs,
@@ -179,7 +183,7 @@ def upperfirst(s):
   return s[0].upper() + s[1:]
 
 
-def replace_content_for_test_file(func_name, params, content):
+def replace_content_for_test_file(autovalue_class_name, func_name, params, content):
   func_name_anchor = '.' + func_name + '('
   output = ""
   while func_name_anchor in content:
@@ -189,7 +193,7 @@ def replace_content_for_test_file(func_name, params, content):
 
     # E.g. "f1, f2, f3"
     input_args_str = get_until_close_paren(post)
-    replaced_input_args = replace_test_input_args_with_autovalue_class(input_args_str, params)
+    replaced_input_args = replace_test_input_args_with_autovalue_class(autovalue_class_name, input_args_str, params)
     output += pre + func_name_anchor + replaced_input_args
     content = post[len(input_args_str):]
 
@@ -200,7 +204,7 @@ def replace_content_for_test_file(func_name, params, content):
   return output
 
 
-def replace_content_for_call_site_file(func_name, params, content):
+def replace_content_for_call_site_file(autovalue_class_name, func_name, params, content):
   func_name_anchor = '.' + func_name + '('
   output = ""
   while func_name_anchor in content:
@@ -210,7 +214,7 @@ def replace_content_for_call_site_file(func_name, params, content):
 
     # E.g. "f1, f2, f3"
     input_args_str = get_until_close_paren(post)
-    replaced_input_args = replace_input_args_with_autovalue_class(input_args_str, params)
+    replaced_input_args = replace_input_args_with_autovalue_class(autovalue_class_name, input_args_str, params)
     output += pre + func_name_anchor + replaced_input_args
     content = post[len(input_args_str):]
 
@@ -221,9 +225,9 @@ def replace_content_for_call_site_file(func_name, params, content):
   return output
 
 
-def replace_test_input_args_with_autovalue_class(input_args_str, params):
+def replace_test_input_args_with_autovalue_class(autovalue_class_name, input_args_str, params):
   input_arg_strs = parse_input_arg_strs(input_args_str)
-  output = AUTO_VALUE_CLASS_NAME + ".builder()"
+  output = autovalue_class_name + ".builder()"
   cleaned_arg_strs = [clean_input_arg(s) for s in input_arg_strs]
 
   for arg, param in zip(cleaned_arg_strs, params):
@@ -234,9 +238,9 @@ def replace_test_input_args_with_autovalue_class(input_args_str, params):
   return output
 
 
-def replace_input_args_with_autovalue_class(input_args_str, params):
+def replace_input_args_with_autovalue_class(autovalue_class_name, input_args_str, params):
   input_arg_strs = parse_input_arg_strs(input_args_str)
-  output = AUTO_VALUE_CLASS_NAME + ".builder()"
+  output = autovalue_class_name + ".builder()"
   cleaned_arg_strs = [clean_input_arg(s) for s in input_arg_strs]
 
   for arg, param in zip(cleaned_arg_strs, params):
@@ -289,6 +293,7 @@ def parse_args(cmd_args):
   parser.add_argument("--output_autovalue_class", action="store_true")
   parser.add_argument("--convert_method_calls_in_test_file")
   parser.add_argument("--convert_call_site_file")
+  parser.add_argument("--autovalue_class_name", default=AUTO_VALUE_CLASS_NAME)
 
   args = parser.parse_args(cmd_args)
   return args
