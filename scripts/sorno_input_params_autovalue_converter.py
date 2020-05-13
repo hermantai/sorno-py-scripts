@@ -1,12 +1,129 @@
 #!/usr/bin/env python3
 """A script that converts the mulitple inputs of a function to a single
-Params Autovalue class.
+Autovalue class.
+
+For the usages below, assume we have a class called MyConverter and the
+following files:
+
+# sample_function_defs.txt
+
+  String convertFunc(boolean f1, Optional<String> f2, Optional<Integer> f3, boolean f4) {
+    print(f1);
+    print(f2);
+    print(f3);
+    print(f4);
+    return "nothing";
+  }
+
+# sample_convert_method_calls_in_test_file.txt (this can be the whole test file)
+
+public void assert1() {
+  assertThat(
+      converter.convertFunc(
+        /* f1= */ false,
+        /* f2= */ Optional.empty(),
+        Optional.of(123),
+        /* f4= */ true)
+      ).isEqualTo("nothing");
+}
+
+# sample_convert_call_site_file.txt (this should only contain the call site invocation)
+
+converter.convertFunc(false, Optional.empty(), Optional.of(4), true);
+
+# end of all files
 
 Usage: python3 sorno_input_params_autovalue_converter.py sample_function_defs.txt --output_autovalue_class
 
+Output the definition of the autovalue class.
+### begin of output
+import com.google.auto.value.AutoValue;
+
+/** Input parameters for convertFunc. */
+@AutoValue
+public abstract static class Params {
+
+  public abstract boolean f1();
+
+  public abstract Optional<String> f2();
+
+  public abstract Optional<Integer> f3();
+
+  public abstract boolean f4();
+
+  public static Builder builder() {
+      // TODO
+      return new AutoValue_Params.Builder()
+    .setF1(false)
+    .setF4(false);
+  }
+
+  abstract Builder toBuilder();
+
+  /** Builder for {@link Params} */
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public abstract Builder setF1(boolean f1);
+
+    public abstract Builder setF2(Optional<String> f2);
+
+    public abstract Builder setF3(Optional<Integer> f3);
+
+    public abstract Builder setF4(boolean f4);
+
+    public abstract Params build();
+  }
+}
+### end of output
+
+Usage: python3 sorno_input_params_autovalue_converter.py sample_function_defs.txt --transform_func_def_with_autovalue
+
+Transform the function definition to use the generated autovalue class.
+
+### begin of output
+
+  String convertFunc(Params params)) {
+    print(params.f1());
+    print(params.f2());
+    print(params.f3());
+    print(params.f4());
+    return "nothing";
+  }
+
+### end of output
+
 Usage: python3 sorno_input_params_autovalue_converter.py sample_function_defs.txt --convert_method_calls_in_test_file sample_convert_method_calls_in_test_file.txt
 
+Convert method calls in a test file to use the autovalue class.
+
+### begin of output
+
+public void assert1() {
+  assertThat(
+      converter.convertFunc(Params.builder()
+.setF3(Optional.of(123))
+.setF4(true)
+.build())
+      ).isEqualTo("nothing");
+}
+
+### end of output
+
 Usage: python3 sorno_input_params_autovalue_converter.py sample_function_defs.txt --convert_call_site_file sample_convert_call_site_file.txt
+
+Convert the original call invocation to use the autovalue class.
+
+### begin of output
+
+converter.convertFunc(Params.builder()
+.setF1(false)
+.setF2(Optional.empty())
+.setF3(Optional.of(4))
+.setF4(true)
+.build());
+
+### end of output
 
     Copyright 2020 Heung Ming Tai
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,6 +203,9 @@ class App(object):
       if self.args.convert_call_site_file:
         content = open(self.args.convert_call_site_file).read()
         print(replace_content_for_call_site_file(self.get_autovalue_class_name(), func_name, params, content))
+
+      if self.args.transform_func_def_with_autovalue:
+        print(transform_func_def(self.get_autovalue_class_name(), func_name, params, func_def_str))
 
       return 0
 
@@ -282,6 +402,57 @@ def can_skip_arg(arg):
   return arg in ("false", "Optional.empty()")
 
 
+def transform_func_def(autovalue_class_name, func_name, params, func_def_str):
+  """
+  Transforms a function defintion with the the use of an auto value class.
+
+  It does the following:
+    1) Replace the input parameters with the auto value class alone.
+    2) Replace all instances of the input parameters with the fetching
+       of the corresponding fields from the params object.
+
+  For example, given the following function definition:
+
+  String convertFunc(type1 f1, type2 f2) {
+    return f1 + f1 + f2;
+  }
+
+  It becomes (assuming the autovalue class name is Params):
+
+  String convertFunc(Params params) {
+    return params.f1() + params.f1() + params.f2();
+  }
+  """
+  output = ""
+  params_var_name = "params"
+
+  # The example is splitted into:
+  # "String convertFunc" and "type1 f1, type2 f2) {..."
+  pre, post_open_paren_str = func_def_str.split('(', 1)
+  output += pre
+  output += "(%s %s)" % (autovalue_class_name, params_var_name)
+
+  # params_str is "type1 f1, type2"
+  params_str = get_until_close_paren(post_open_paren_str)
+  # Skipped the params_str.
+  # post_input_params_str is " {
+  #   return f1 + f1 + f2;
+  # }"
+  post_input_params_str = post_open_paren_str[len(params_str):]
+
+  for param in params:
+      # Replaces all param name with a fetch of a field from the
+      # autovalue class. E.g. "f1 + f2" -> "params.f1() + params.f2()".
+      post_input_params_str = re.sub(
+        r"\b%s\b" % param.name,
+        "%s.%s()" % (params_var_name, param.name),
+        post_input_params_str,
+      )
+
+  output += post_input_params_str
+  return output
+
+
 def parse_args(cmd_args):
   description = __doc__.split("Copyright 2018")[0].strip()
 
@@ -290,10 +461,20 @@ def parse_args(cmd_args):
     formatter_class=argparse.RawDescriptionHelpFormatter,
   )
   parser.add_argument("func_def_input_file", help="A file with the function definition")
-  parser.add_argument("--output_autovalue_class", action="store_true")
-  parser.add_argument("--convert_method_calls_in_test_file")
-  parser.add_argument("--convert_call_site_file")
   parser.add_argument("--autovalue_class_name", default=AUTO_VALUE_CLASS_NAME)
+  parser.add_argument(
+    "--output_autovalue_class",
+    action="store_true",
+    help="Output the definition of the autovalue class.")
+  parser.add_argument(
+    "--convert_method_calls_in_test_file",
+    help="Convert method calls in a test file to use the autovalue class.")
+  parser.add_argument(
+	"--convert_call_site_file",
+    help="Convert the original call invocation to use the autovalue class.")
+  parser.add_argument(
+    "--transform_func_def_with_autovalue", action="store_true",
+    help="Transform the function definition by using the autovalue class.")
 
   args = parser.parse_args(cmd_args)
   return args
