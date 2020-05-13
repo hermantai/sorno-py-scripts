@@ -214,6 +214,11 @@ class App(object):
 
 
 def get_func_name(s):
+  """
+  Gets the function name from a string.
+
+  E.g. "void func(type f1)" -> "func"
+  """
   pre_open_paren_str = s.split('(')[0]
   if ' ' not in pre_open_paren_str:
     return pre_open_paren_str
@@ -222,6 +227,11 @@ def get_func_name(s):
 
 
 def get_params(s):
+  """
+  Gets the list of input parameters (class Param) from a string.
+
+  E.g. "void func(int f1, String f2)" -> [Param(...), Param(...)]
+  """
   post_open_paren_str = s.split('(', 1)[1]
   params_str = get_until_close_paren(post_open_paren_str)
   params_strs = [s.strip() for s in params_str.split(',')]
@@ -247,6 +257,12 @@ def get_params(s):
 
 
 def get_until_close_paren(s):
+  """
+  Gets the string up to the closing parenthesis ')', bypassing all pairs
+  of parentheses in-betwee.
+
+  E.g. "false, (long) 123, 4).getSomething()" -> "false, (long) 123, 4"
+  """
   open_paren_count = 0
   for i in range(len(s)):
     c = s[i]
@@ -346,6 +362,18 @@ def replace_content_for_call_site_file(autovalue_class_name, func_name, params, 
 
 
 def replace_test_input_args_with_autovalue_class(autovalue_class_name, input_args_str, params):
+  """
+  Replaces input arguments string with an object of the autovalue class.
+  Because this is for the test file, we assume "false" and "Optional.empty()"
+  are not significant.
+
+  E.g. "false, 3, Optional.empty(), "abc", true" -> "Params.builder()
+    .setF2(3)
+    .setF4("abc")
+    .setF5(true)
+    .build()
+  """
+  # E.g. "12, /* comment= */ 34, 45" -> ["12", "34", "45"]
   input_arg_strs = parse_input_arg_strs(input_args_str)
   output = autovalue_class_name + ".builder()"
   cleaned_arg_strs = [clean_input_arg(s) for s in input_arg_strs]
@@ -359,6 +387,18 @@ def replace_test_input_args_with_autovalue_class(autovalue_class_name, input_arg
 
 
 def replace_input_args_with_autovalue_class(autovalue_class_name, input_args_str, params):
+  """
+  Replaces input arguments string with an object of the autovalue class.
+
+  E.g. "false, 3, Optional.empty(), "abc", true" -> "Params.builder()
+    .setF1(false)
+    .setF2(3)
+    .setF3(Optional.empty())
+    .setF4("abc")
+    .setF5(true)
+    .build()
+  """
+  # E.g. "12, /* comment= */ 34, 45" -> ["12", "34", "45"]
   input_arg_strs = parse_input_arg_strs(input_args_str)
   output = autovalue_class_name + ".builder()"
   cleaned_arg_strs = [clean_input_arg(s) for s in input_arg_strs]
@@ -370,6 +410,12 @@ def replace_input_args_with_autovalue_class(autovalue_class_name, input_args_str
 
 
 def parse_input_arg_strs(s):
+  """
+  Parses the input values out from a string.
+
+  E.g. "12, /* comment= */ 34, func(8,9)" ->
+    ["12", "/* comment= */ 34", "func(8,9)"]
+  """
   input_arg_strs = []
   sofar = []
   num_open_parens = 0
@@ -392,6 +438,7 @@ def parse_input_arg_strs(s):
 
 
 def clean_input_arg(s):
+  # strip out comments
   if "*/" in s:
     s = s.split("*/", 1)[1]
 
