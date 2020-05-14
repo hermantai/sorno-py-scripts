@@ -490,7 +490,7 @@ def transform_func_def(autovalue_class_name, func_name, params, func_def_str):
   # post_input_params_str is " {
   #   return f1 + f1 + f2;
   # }"
-  post_input_params_str = post_open_paren_str[len(params_str):]
+  post_input_params_str = post_open_paren_str[len(params_str) + 1:]
 
   for param in params:
       # Replaces all param name with a fetch of a field from the
