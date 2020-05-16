@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""A script that converts mulitple inputs of a function to a single
+"""A script that converts mulitple inputs of a java function to a single
 Autovalue params class.
+
+This script DOES NOT UNDERSTAND THE JAVA LANGUAGE. It simply uses some simple
+parsing. Make sure you look at the result before using the code.
 
 For the usages below, assume we have a class called MyConverter and the
 following files:
