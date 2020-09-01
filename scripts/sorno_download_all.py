@@ -63,6 +63,7 @@ class DownloadAllApp(object):
         self,
         url,
         regex,
+        text_regex,
         out_dir,
         formatted_filename="{link}",
         dry_run=False,
@@ -70,6 +71,7 @@ class DownloadAllApp(object):
     ):
         self.url = url
         self.regex = re.compile(regex)
+        self.text_regex = re.compile(text_regex)
         self.out_dir = out_dir
         self.formatted_filename = formatted_filename
         self.dry_run = dry_run
@@ -95,7 +97,7 @@ class DownloadAllApp(object):
 
         elements_links = []
         for element, attribute, link, pos in tree.iterlinks():
-            if self.regex.search(link):
+            if self.regex.search(link) and self.text_regex.search(element.text) :
                 elements_links.append((element, link))
             else:
                 _LOG.debug("Skip [%s]", link)
@@ -191,6 +193,11 @@ def parse_args(cmd_args):
         default=".*",
         help="Only download links with matched regex",
     )
+    parser.add_argument(
+        "--text-regex",
+        default=".*",
+        help="Only download links with text matching text-regex",
+    )
     parser.add_argument("url")
 
     args = parser.parse_args(cmd_args)
@@ -208,6 +215,7 @@ def main():
     app = DownloadAllApp(
         args.url,
         args.regex,
+        args.text_regex,
         args.out_dir,
         formatted_filename=args.formatted_filename,
         dry_run=args.dry_run,
