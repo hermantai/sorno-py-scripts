@@ -479,7 +479,9 @@ def transform_func_def(autovalue_class_name, func_name, params, func_def_str):
   }
   """
   output = ""
-  params_var_name = "params"
+  # E.g. If the auto value class name is InputParams, the params_var_name
+  # should be inputParams.
+  params_var_name = autovalue_class_name[0].lower() + autovalue_class_name[1:]
 
   # The example is splitted into:
   # "String convertFunc" and "type1 f1, type2 f2) {..."
