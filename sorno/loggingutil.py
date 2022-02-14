@@ -33,6 +33,7 @@ def setup_logger(
     logging_level=None,
     use_path=False,
     suppress_stream_handler_broken_pipe_error=True,
+    propagate=False,
 ):
     """Setup a given logger with the parameters given.
 
@@ -84,6 +85,7 @@ def setup_logger(
     logger.handlers = []  # clear the existing handlers
     logger.addHandler(hdlr)
     logger.setLevel(logging_level)
+    logger.propagate = propagate
 
     if log_to_file is not None:
         init_command = 'mkdir -p %s' % os.path.dirname(log_to_file)
