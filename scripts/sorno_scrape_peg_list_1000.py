@@ -31,7 +31,7 @@ import time
 
 import requests
 
-from sorno import loggingutil
+from sornobase import loggingutil
 
 
 _LOG = logging.getLogger(__name__)

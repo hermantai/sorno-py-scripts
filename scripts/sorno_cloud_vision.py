@@ -36,7 +36,7 @@ import sys
 from apiclient import discovery
 import humanfriendly
 from oauth2client import client as oauthclient
-from sorno import loggingutil
+from sornobase import loggingutil
 
 
 _log = logging.getLogger()

@@ -40,13 +40,13 @@ import logging
 import re
 import subprocess
 import sys
-import urlparse
+from urllib.parse import urlparse, parse_qs
 
 import twitter
 import bs4
 
-from sorno import consoleutil
-from sorno import loggingutil
+from sornobase import consoleutil
+from sornobase import loggingutil
 
 
 _log = logging.getLogger()
@@ -121,10 +121,10 @@ class App(object):
         Clean a link from something like:
         https://www.google.com/url?q=https://blahblah.com&sa=D&ust=1498545552302000&usg=AFQjCNE8sJX0-SzPOwH545Ek44d3gNXtMg to https://blahblah.com
         """
-        url = urlparse.urlparse(link)
+        url = urlparse(link)
         params = {}
         if url.query:
-            params = urlparse.parse_qs(url.query)
+            params = parse_qs(url.query)
 
         if url.netloc == "www.google.com" and url.path == "/url" and params.get('q'):
             return params.get('q')[0]

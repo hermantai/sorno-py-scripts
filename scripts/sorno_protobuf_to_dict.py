@@ -29,7 +29,7 @@ import re
 import sys
 
 from sorno import debuggingutil
-from sorno import sornomisc
+from sornobase import sornomisc
 
 
 class App(object):

@@ -54,9 +54,9 @@ from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 from oauth2client import tools
 
-from sorno import consoleutil
-from sorno import loggingutil
-from sorno import stringutil
+from sornobase import consoleutil
+from sornobase import loggingutil
+from sornobase import stringutil
 
 # The oauth scope needed for Google Tasks API
 OAUTH_SCOPE = 'https://www.googleapis.com/auth/tasks'

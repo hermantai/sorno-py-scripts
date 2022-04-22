@@ -29,7 +29,7 @@ from __future__ import unicode_literals
 
 import argparse
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 
 import logging
 

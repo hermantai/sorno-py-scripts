@@ -29,7 +29,7 @@ from __future__ import unicode_literals
 
 import argparse
 
-from cStringIO import StringIO
+from io import StringIO
 
 import csv
 import datetime
@@ -40,8 +40,8 @@ import subprocess
 
 from bs4 import BeautifulSoup
 import requests
-from sorno import loggingutil
-from sorno import consoleutil
+from sornobase import loggingutil
+from sornobase import consoleutil
 
 _LOG = logging.getLogger(__name__)
 _PLAIN_LOGGER = None  # will be created in main()

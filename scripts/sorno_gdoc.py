@@ -91,7 +91,7 @@ class App(object):
 
         if need_get_code:
             authorize_url = flow.step1_get_authorize_url()
-            print 'Go to the following link in your browser: ' + authorize_url
+            print('Go to the following link in your browser: ' + authorize_url)
             code = raw_input('Enter verification code: ').strip()
 
             credentials = flow.step2_exchange(code)
@@ -328,10 +328,10 @@ def download_file(service, download_url):
   """
   resp, content = service._http.request(download_url)
   if resp.status == 200:
-      print 'Status: %s' % resp
+      print('Status: %s' % resp)
       return content
   else:
-      print 'An error occurred: %s' % resp
+      print('An error occurred: %s' % resp)
       return None
 
 
@@ -356,8 +356,8 @@ def retrieve_all_files(service, query):
           page_token = files.get('nextPageToken')
           if not page_token:
               break
-      except apiclient.errors.HttpError, error:
-          print 'An error occurred: %s' % error
+      except apiclient.errors.HttpError as error:
+          print('An error occurred: %s' % error)
           break
   return result
 

@@ -54,9 +54,9 @@ import sys
 import requests
 import six
 
-from sorno import consoleutil
-from sorno import datetimeutil
-from sorno import loggingutil
+from sornobase import consoleutil
+from sornobase import datetimeutil
+from sornobase import loggingutil
 
 
 ENV_VAR_FEEDLY_ACCESS_TOKEN = "SORNO_FEEDLY_ACCESS_TOKEN"

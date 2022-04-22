@@ -31,7 +31,7 @@ from __future__ import unicode_literals
 import argparse
 import sys
 
-from sorno import datetimeutil
+from sornobase import datetimeutil
 
 
 _datetime_format = "%Y-%m-%d %H:%M:%S%z %Z"

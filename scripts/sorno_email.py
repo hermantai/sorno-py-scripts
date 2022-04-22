@@ -35,7 +35,7 @@ import smtplib
 import socket
 import sys
 
-from sorno import loggingutil
+from sornobase import loggingutil
 
 
 _log = logging.getLogger()

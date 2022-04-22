@@ -28,13 +28,13 @@ from collections import namedtuple
 import logging
 import os
 import sys
-import urlparse
+from urllib.parse import urlparse
 
 import requests
 from lxml import html
 
-from sorno import loggingutil
-from sorno import consoleutil
+from sornobase import loggingutil
+from sornobase import consoleutil
 
 
 _LOG = logging.getLogger(__name__)
@@ -200,8 +200,8 @@ class App(object):
             return False
 
         for prev, cur in zip(prev_items, items):
-            prev_query = urlparse.urlparse(prev.attrib['href']).query
-            cur_query = urlparse.urlparse(cur.attrib['href']).query
+            prev_query = urlparse(prev.attrib['href']).query
+            cur_query = urlparse(cur.attrib['href']).query
             if prev_query != cur_query:
                 return False
 

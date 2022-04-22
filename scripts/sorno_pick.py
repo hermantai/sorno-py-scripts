@@ -79,8 +79,8 @@ import sys
 import subprocess
 
 
-from sorno import loggingutil
-from sorno import consoleutil
+from sornobase import loggingutil
+from sornobase import consoleutil
 
 
 _LOG = logging.getLogger(__name__)

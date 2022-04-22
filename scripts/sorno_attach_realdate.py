@@ -41,7 +41,7 @@ import fileinput
 import re
 import sys
 
-from sorno import datetimeutil
+from sornobase import datetimeutil
 
 
 _datetime_format = "%Y-%m-%d %H:%M:%S"

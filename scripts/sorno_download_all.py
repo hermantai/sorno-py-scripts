@@ -49,9 +49,9 @@ from lxml import html
 import requests
 from six.moves.queue import Queue
 
-from sorno import consoleutil
-from sorno import loggingutil
-from sorno import webutil
+from sornobase import consoleutil
+from sornobase import loggingutil
+from sornobase import webutil
 
 
 _LOG = logging.getLogger(__name__)

@@ -25,7 +25,7 @@ import inspect
 import mock
 import unittest
 
-from sorno import loggingutil
+from sornobase import loggingutil
 import sorno_gtasks
 
 

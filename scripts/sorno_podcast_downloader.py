@@ -33,8 +33,8 @@ import sys
 import dateutil.parser as dateutil_parser
 import feedparser
 import requests
-from sorno import loggingutil
-from sorno import webutil
+from sornobase import loggingutil
+from sornobase import webutil
 import tzlocal
 
 

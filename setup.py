@@ -12,20 +12,21 @@ dependency_libs = [
     "dropbox",
     "feedparser",
     "gitpython",
+    "oauth2client", # for google_api_python_client
     "google_api_python_client",
     "humanfriendly",
     "humanize",
-    "ipython",
     "lxml",
-    "pypdf",
+    # If this does not work, try python3 -m pip install Pillow
+    # https://stackoverflow.com/questions/54496599/pip-cant-install-pillow
+    "pillow", # PIL
     "PyPDF2",
-    # https://github.com/ahupp/python-magic
-    "python_magic",
     "python_dateutil",
     "python_twitter",
     "requests",
     "six",
     "tzlocal",
+    "sornobase",
 ]
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -35,7 +36,7 @@ with open("README.rst", "r") as f:
 
 setup(
     name="sorno-py-scripts",
-    version="0.48.6",
+    version="0.48.7",
     description="Herman Tai's python scripts all prefixed with \"sorno_\"",
     long_description=readme_text,
     author="Herman Tai",

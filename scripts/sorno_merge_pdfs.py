@@ -26,8 +26,8 @@ from os import path
 import subprocess
 import sys
 
-from sorno import loggingutil
-import pyPdf
+from sornobase import loggingutil
+import PyPDF2
 
 
 _log = logging.getLogger()
@@ -45,13 +45,13 @@ class App(object):
     def run(self):
         """The entry point of the script
         """
-        out = pyPdf.PdfFileWriter()
+        out = PyPDF2.PdfFileWriter()
 
         for pdf_file in self.args.pdf_file:
             _log.info("Read %s", pdf_file)
             # cannot close the file before writing
             f = open(pdf_file, "rb")
-            pdf_f = pyPdf.PdfFileReader(f)
+            pdf_f = PyPDF2.PdfFileReader(f)
             if pdf_f.isEncrypted:
                 try:
                     pdf_f.decrypt("")
@@ -61,7 +61,7 @@ class App(object):
                     _log.info("Decrypt with qpdf and output to: %s", new_pdf_file)
                     subprocess.check_call(['qpdf', "--password=", '--decrypt', pdf_file, new_pdf_file])
                     new_f = open(new_pdf_file, "rb")
-                    pdf_f = pyPdf.PdfFileReader(new_f)
+                    pdf_f = PyPDF2.PdfFileReader(new_f)
             for i in range(pdf_f.numPages):
                 out.addPage(pdf_f.getPage(i))
 

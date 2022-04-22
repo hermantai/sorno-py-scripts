@@ -28,12 +28,12 @@ import random
 import sys
 import time
 import urllib
-import urlparse
+from urllib.parse import urlparse, parse_qsl, ParseResult
 
 import requests
 from lxml import html
 
-from sorno import loggingutil
+from sornobase import loggingutil
 
 
 _log = logging.getLogger()
@@ -105,16 +105,16 @@ class App(object):
         url = self._ensure_product_reviews_url(url)
 
         n = 1
-        parsed = urlparse.urlparse(url)
+        parsed = urlparse(url)
 
         query = parsed.query
-        query_list = urlparse.parse_qsl(query)
+        query_list = parse_qsl(query)
         # capture the pageNumber in query, and leave other as is
         for k, v in query_list:
             if k == "pageNumber":
                 n = int(v)
 
-        modified_parsed = urlparse.ParseResult(
+        modified_parsed = ParseResult(
             scheme=parsed.scheme,
             netloc=parsed.netloc,
             path=parsed.path,
@@ -151,7 +151,7 @@ class App(object):
                 if not product_reviews_url:
                     product_reviews_url = anchor.attrib['href']
 
-            url_query = urlparse.urlparse(product_reviews_url).query
+            url_query = urlparse(product_reviews_url).query
             if not url_query:
                 product_reviews_url += "?pageNumber=1"
 

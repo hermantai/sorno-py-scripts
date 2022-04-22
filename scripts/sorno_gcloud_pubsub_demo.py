@@ -50,8 +50,8 @@ from apiclient import discovery
 from oauth2client import client as oauth2client
 import googleapiclient
 
-from sorno import loggingutil
-from sorno import datetimeutil
+from sornobase import loggingutil
+from sornobase import datetimeutil
 
 PUBSUB_SCOPES = ['https://www.googleapis.com/auth/pubsub']
 _log = logging.getLogger()

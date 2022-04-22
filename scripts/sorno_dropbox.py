@@ -39,9 +39,9 @@ import re
 import sys
 
 from dropbox import files as dbfiles
-from dropbox import oauth, rest, session, dropbox
+from dropbox import oauth, session, Dropbox
 import six
-from sorno import loggingutil
+from sornobase import loggingutil
 
 
 # Fill in your consumer key and secret below or set the corresponding
@@ -68,7 +68,7 @@ def command(login_required=True):
 
             try:
                 return f(self, *args)
-            except rest.ErrorResponse as e:
+            except Error as e:
                 msg = e.user_error_msg or str(e)
                 _LOG.exception(msg)
 
@@ -91,7 +91,7 @@ class DropboxApp(object):
             serialized_token = open(DROPBOX_TOKEN_FILE).read()
             if serialized_token.startswith('oauth2:'):
                 access_token = serialized_token[len('oauth2:'):]
-                self.api_client = dropbox.Dropbox(access_token)
+                self.api_client = Dropbox(access_token)
                 _LOG.debug("[loaded OAuth 2 access token]")
             else:
                 _LOG.warn("Malformed access token in %r.", DROPBOX_TOKEN_FILE)
@@ -142,7 +142,7 @@ class DropboxApp(object):
           resp = self.api_client.metadata(filepath)
           _LOG.debug(resp)
           return not resp.get('is_deleted')
-      except rest.ErrorResponse as e:
+      except Error as e:
           if e.status == 404:
               return False
           raise
@@ -164,7 +164,7 @@ class DropboxApp(object):
             oauth_result = flow.finish(code)
             access_token, user_id = oauth_result.access_token, oauth_result.user_id
             _LOG.debug("User id is %s", user_id)
-        except rest.ErrorResponse, e:
+        except Error as e:
             _PLAIN_LOGGER.error('Error: %s', e)
             return
 
@@ -174,7 +174,7 @@ class DropboxApp(object):
             "The access token is written to the file %s",
             DROPBOX_TOKEN_FILE,
         )
-        self.api_client = dropbox.Dropbox(access_token)
+        self.api_client = Dropbox(access_token)
         _LOG.debug("Client info: %s", self.api_client.users_get_current_account())
 
     @command(login_required=True)
@@ -317,7 +317,7 @@ class DropboxApp(object):
             s += metadata.path_display
         if not s:
             s = metadata.name
-        if args.print_size and not args.detail and isinstance(metadata, dropbox.files.FileMetadata):
+        if args.print_size and not args.detail and isinstance(metadata, dbfiles.FileMetadata):
             s += "\t" + humanize.naturalsize(metadata.size)
         if args.output_buffer:
             # the following comes from the StreamHandler.emit method in the

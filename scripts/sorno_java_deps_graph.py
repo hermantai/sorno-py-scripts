@@ -31,7 +31,7 @@ import os
 import re
 import sys
 
-from sorno import loggingutil
+from sornobase import loggingutil
 
 
 _log = logging.getLogger()

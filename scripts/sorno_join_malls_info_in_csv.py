@@ -34,9 +34,9 @@ import re
 import string
 import sys
 
-from sorno import algo
-from sorno import consoleutil
-from sorno import loggingutil
+from sornobase import algo
+from sornobase import consoleutil
+from sornobase import loggingutil
 
 
 _log = logging.getLogger()

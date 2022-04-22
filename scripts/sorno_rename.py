@@ -33,7 +33,7 @@ import os
 import re
 import sys
 
-from sorno import (
+from sornobase import (
     consoleutil,
     loggingutil,
     stringutil,

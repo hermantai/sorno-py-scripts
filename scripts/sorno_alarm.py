@@ -22,8 +22,9 @@ sorno_alarm.py
 import argparse
 import time
 
-from Tkinter import *
-import tkFont
+from tkinter import Tk, font, Label
+
+from sornobase import consoleutil
 
 class Alarm(object):
     def __init__(self, use_pop_up=False):
@@ -41,7 +42,7 @@ class Alarm(object):
 
         if self.use_pop_up:
             root = Tk()
-            custom_font = tkFont.Font(family="Helvetica", size=30)
+            custom_font = font.Font(family="Helvetica", size=30)
             root.tkraise()
             w = Label(
                 root,
@@ -55,7 +56,7 @@ class Alarm(object):
         else:
             # System bell
             print("\a")
-            raw_input("Press enter to continue...")
+            consoleutil.input("Press enter to continue...")
 
 class AlarmApp(object):
     def __init__(self, alarm):

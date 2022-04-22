@@ -51,9 +51,9 @@ import httplib2
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
-from sorno import consoleutil
-from sorno import loggingutil
-from sorno import webutil
+from sornobase import consoleutil
+from sornobase import loggingutil
+from sornobase import webutil
 
 _LOG = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class App(object):
 
         if need_get_code:
             authorize_url = flow.step1_get_authorize_url()
-            print 'Go to the following link in your browser: ' + authorize_url
+            print('Go to the following link in your browser: ' + authorize_url)
             code = raw_input('Enter verification code: ').strip()
 
             credentials = flow.step2_exchange(code)

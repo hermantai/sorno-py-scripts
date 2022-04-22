@@ -27,7 +27,7 @@ import logging
 import subprocess
 import sys
 
-from sorno import loggingutil
+from sornobase import loggingutil
 from sorno import pdfutil
 
 _log = logging.getLogger()
