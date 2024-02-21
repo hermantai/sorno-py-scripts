@@ -4,7 +4,8 @@
 set -o errexit
 set -o xtrace
 
-python setup.py bdist_egg sdist
+#python setup.py bdist_egg sdist
+python setup.py bdist_wheel
 # The distributions are in the dist folder, so get the two filenames from that
 # folder by simply looking at the timestamps of the files. Pick the two latest
 # files to be uploaded (the .egg and the .tar.gz files)
